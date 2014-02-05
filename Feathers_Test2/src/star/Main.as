@@ -76,7 +76,7 @@ package star
 				{label:"3-D Display", data:BROWSE_SCREEN},
 			]);
 			
-			navigationBar.selectedIndex  = 1; // loads homescreens
+			navigationBar.selectedIndex  = 2; // loads homescreens
 			navigationBar.addEventListener(Event.CHANGE, navigationBarChanged);
 			
 			// make the bar expand across the entire stage. 

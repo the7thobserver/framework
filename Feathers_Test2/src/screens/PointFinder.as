@@ -1,174 +1,193 @@
 package screens
 {
-	import flash.text.TextFormat;
-	
-	import feathers.controls.ImageLoader;
-	import feathers.controls.Label;
+	import flash.display.BitmapData;
+	import feathers.controls.LayoutGroup;
 	import feathers.controls.Screen;
 	import feathers.controls.ScrollContainer;
 	import feathers.layout.HorizontalLayout;
 	import feathers.layout.VerticalLayout;
 	
 	import starling.display.Image;
+	import starling.events.Touch;
+	import starling.events.TouchEvent;
+	import starling.events.TouchPhase;
 	import starling.textures.Texture;
 	
 	public class PointFinder extends Screen
 	{
-		// 2048x2048
-		[Embed(source="/../assets/humanAssistPhotos/table_sideR.jpg")]
-		private static const SideTableR:Class; // use this to refer to the image data
+		// Max resolution size of a texture(?) = 2048x2048
+		[Embed(source="/../assets/humanAssistPhotos/table_side.jpg")]
+		private static const SideTable:Class;
 		
-		[Embed(source="/../assets/humanAssistPhotos/table_frontR.jpg")]
-		private static const FrontTableR:Class; // use this to refer to the image data
+		[Embed(source="/../assets/humanAssistPhotos/table_front.jpg")]
+		private static const FrontTable:Class;
 		
-		[Embed(source="/../assets/humanAssistPhotos/table_front1R.jpg")]
-		private static const FrontTable1R:Class; // use this to refer to the image data
+		[Embed(source="/../assets/humanAssistPhotos/table_front1.jpg")]
+		private static const FrontTable1:Class;
 		
-		// feathers display container stuff
-		private var scrollContainer:ScrollContainer;
-		private var verticleLayout:VerticalLayout;
+		// Thumbnail design specs
+		private const BORDERSIZE:int = 0;
+		private const thumNailSize:int = 200;
+		private const padding:int = 5;
 		
-		// picutres loader objects - This is where the picutre goes
-		private var sideTable:ImageLoader;
-		private var frontTable:ImageLoader;
-		private var frontTable1:ImageLoader;
+		// Arrays to hold pictures
+		private var imageArray:Array;
+		private var thumnailArray:Array;
 		
-		private var instructionsText:Label;
+		// Keep track of side scroll
+		private var touchBeginX:int;
+		private var touchBeginY:int;
 		
+		// Temp main image holder
+		private var mainImage:Image; 
 		
+		// Keep track of current image in array
+		private var index:int = 0;
 		
-		// Runs when class is first initialized. -made to be overridden
-		private var verticalLayout:VerticalLayout;
-		private var horizontalLayout:HorizontalLayout;
-		private var container:ScrollContainer;
-		private var layout:HorizontalLayout;
-		
+		// Containers which I assume are like divs in http
+		private var mainImageContainer:LayoutGroup;
+		private var thumnailContainer:ScrollContainer;
+		private var layout:VerticalLayout;
 		
 		override protected function initialize():void{
-			buildContainer(); 
-		 	loadTitles();
+			// Initilize arrays
+			imageArray = new Array();
+			thumnailArray = new Array();
+			
+			// Initilze thumnail contain with thumbnails
+			buildContainers(); 
+			
+			// Initilize images
+		 	loadImages();
+			
+			this.addEventListener(TouchEvent.TOUCH, onTouch);
 		}
 		
-		// This is where we load the images and text 
-		private function loadTitles():void
+		private function onTouch(event:TouchEvent):void
 		{
-			var x:Image = new Image(Texture.fromEmbeddedAsset(SideTableR));
-			var y:Image = new Image(Texture.fromEmbeddedAsset(SideTableR));
-			var z:Image = new Image(Texture.fromEmbeddedAsset(SideTableR));
+			var t:Touch = event.getTouch(this);
 			
-			container.addChild(x);
-			container.addChild(y);
-			container.addChild(z);
-//			x.x = 25;
-//			x.y = 25;
-//			x.height = (1/3)*stage.height;
-//			x.width = (1/3)*stage.width;
-//			
-//			this.addChild(x);
-//			
-//			var y:Image = new Image(Texture.fromEmbeddedAsset(SideTableR));
-//			y.x = 
-//			y.y = 25;
-//			y.height = (1/3)*stage.height;
-//			y.width = (1/3)*stage.width;
-//			
-//			this.addChild(y);
-//			
-//			var z:Image = new Image(Texture.fromEmbeddedAsset(SideTableR));
-//			z.x = 25;
-//			z.y = 25;
-//			z.height = (1/3)*stage.height;
-//			z.width = (1/3)*stage.width;
-//			
-//			this.addChild(z);
-//			
-			//sideTable = new ImageLoader();
-			//frontTable = new ImageLoader();
-			//frontTable1 = new ImageLoader();
-			
-			
-			//The aspect ratio of an image describes the proportional relationship between its width and its height.
-			//sideTable.maintainAspectRatio = true; // this changes the images to maintain aspect ration
-			//sideTable
-			//frontTable.maintainAspectRatio = true;
-			//frontTable1.maintainAspectRatio = true;
-			
-			// Does the loading
-			//sideTable.source = Texture.fromEmbeddedAsset(SideTableR); // the name of the image data. Texture is a starling class
-			//frontTable.source = Texture.fromEmbeddedAsset(FrontTable); // the name of the image data. Texture is a starling class
-			//frontTable1.source = Texture.fromEmbeddedAsset(FrontTable1); // the name of the image data. Texture is a starling class
-		//sideTable.textureScale = 0.5;
-		//	sideTable.height = 0.6*stage.height;
-		//	sideTable.width = 0.6*stage.width;
-			//addChild(sideTable);
-			//scrollContainer.addChild(sideTable); // add to scroll container.
-			//scrollContainer.addChild(frontTable); // add to scroll container.
-			//scrollContainer.addChild(frontTable1); // add to scroll container.
-			
-//			
-			instructionsText = new Label();
-			instructionsText.textRendererProperties.textFormat = new TextFormat( "Source Sans Pro", 16, 0x333333 );
-			instructionsText.textRendererProperties.embedFonts = true;
-			instructionsText.text = "Welcome to the marker selection screen. Please match the reflectors.";
-			addChild(instructionsText);
-			//scrollContainer.addChild(instructionsText);
-			
+			if(t)
+			{
+				switch(t.phase)
+				{	
+				case TouchPhase.BEGAN:
+					touchBeginX = t.globalX;
+					touchBeginY = t.globalY;
+					break;
+				case TouchPhase.ENDED:
+					if(Math.abs(t.globalX - touchBeginX) < 10)
+					{
+						if(Math.abs(t.globalY - touchBeginY) < 10)
+						{
+							trace(t.target.name);
+							
+							if(t.target.name == "mainImage")
+							{
+								trace("Human Assist Go");
+								// humanAssist(t);
+								index = (index + 1)  % imageArray.length;
+								mainImage = imageArray[index];
+							}	
+							
+							else if(t.target.name == "thumnail0")
+							{
+								var img:Image = new Image(Texture.fromEmbeddedAsset(FrontTable));
+								
+								mainImage = imageArray[0];
+								index = 0;
+							}
+							else if(t.target.name == "thumnail1")
+							{
+								mainImage = imageArray[1];
+								index = 1;
+							}
+							else if(t.target.name == "thumnail2")
+							{
+								mainImage = imageArray[2];
+								index = 2;
+							}
+							
+							mainImageContainer.addChild(mainImage);
+						}
+					}
+					break;
+				
+				}
+			}
 		}
 		
-		// Here we deal with the scroll container and the layout thats being applied
-		private function buildContainer():void
+		private function loadImages():void
 		{
-//			verticalLayout = new VerticalLayout(); 
-//			verticalLayout.verticalAlign = VerticalLayout.VERTICAL_ALIGN_TOP;
-//			verticalLayout.horizontalAlign = VerticalLayout.HORIZONTAL_ALIGN_CENTER;
-//			verticalLayout.gap = 25; // defines space between child items. 
+			var thumNail1:Image = new Image(Texture.fromEmbeddedAsset(SideTable));
+			var thumNail2:Image = new Image(Texture.fromEmbeddedAsset(FrontTable));
+			var thumNail3:Image = new Image(Texture.fromEmbeddedAsset(FrontTable1));
+			mainImage = new Image(Texture.fromEmbeddedAsset(SideTable));
 			
-//			horizontalLayout = new HorizontalLayout();
-//			horizontalLayout.horizontalAlign = HorizontalLayout.HORIZONTAL_ALIGN_CENTER; 
-//			horizontalLayout.verticalAlign = HorizontalLayout.VERTICAL_ALIGN_TOP;
-//			horizontalLayout.gap = 25; 
-//			addChild(horizontalLayout); 
+			mainImage.name = "mainImage";
+			thumNail1.name = "mainImage";
+			thumNail2.name = "mainImage";
+			thumNail3.name = "mainImage";
 			
-			layout = new HorizontalLayout();
-			layout.paddingTop = 10;
-			layout.paddingRight = 15;
-			layout.paddingBottom = 10;
-			layout.paddingLeft = 15;
-			layout.horizontalAlign = HorizontalLayout.HORIZONTAL_ALIGN_CENTER;
-			layout.verticalAlign = HorizontalLayout.VERTICAL_ALIGN_MIDDLE;
+			var x:Image = new Image(Texture.fromEmbeddedAsset(SideTable));
+			
+			imageArray[0] = thumNail1;
+			imageArray[1] = thumNail2;
+			imageArray[2] = thumNail3;
+			
+			initThumnails();
+		
+			mainImageContainer.addChild(mainImage);
+		}
+		
+		private function initThumnails():void
+		{
+			var thumNailHeight:int = 0;
+			
+			for(var i:int = 0; i < imageArray.length; i++)	
+			{
+				var temp:Image = new Image(imageArray[i].texture);
+				
+				temp.x = temp.x;
+				temp.width = thumNailSize;
+				temp.y = thumNailHeight;
+				temp.height = thumNailSize;
+				thumNailHeight += temp.height + BORDERSIZE;
+	
+				temp.name = "thumnail" + i;
+				thumnailArray[i] = temp;
+					
+				thumnailContainer.addChild(temp);
+			}
+		}
+		
+		private function buildContainers():void
+		{	
+			layout = new VerticalLayout();
+			layout.paddingTop = 0;
+			layout.paddingRight = padding;
+			layout.paddingBottom = padding;
+			layout.paddingLeft = padding;
+			layout.horizontalAlign = VerticalLayout.HORIZONTAL_ALIGN_CENTER
+			layout.verticalAlign = HorizontalLayout.VERTICAL_ALIGN_TOP;
 			layout.gap = 20;
 
+			mainImageContainer = new LayoutGroup();
+			mainImageContainer.x = thumNailSize + 2 * padding;
+			mainImageContainer.y = 0;
 			
-			
-			container = new ScrollContainer();
-			container.layout = layout;
-			container.width = this.stage.stageWidth;	
-			container.height = this.stage.stageHeight - 300;
-			
-			addChild(container);
-			
-//			scrollContainer = new ScrollContainer();
-//			scrollContainer.layout = verticalLayout; 	
-//			scrollContainer.width = this.stage.stageWidth;	
-//			scrollContainer.height = this.stage.stageHeight;
-//			addChild(scrollContainer); // add to the screen class
-		}		
-		
-		
-		// method of screen class, made to be overwritten. 
-		// position and size things accurately.
-		override protected function draw():void{
-//			sideTable.validate(); // enforce current numbers to use them
-//			sideTable.width = actualWidth; // actualWidth is a property of the feathers screen class 
-//			sideTable.width =  actualWidth;
-			
-			//frontTable.validate(); // enforce current numbers to use them
-			//frontTable.width = actualWidth; // actualWidth is a property of the feathers screen class 
-			//frontTable.width =  actualWidth;
-			
-			//frontTable1.validate(); // enforce current numbers to use them
-			//frontTable1.width = actualWidth; // actualWidth is a property of the feathers screen class 
-			//frontTable1.width =  actualWidth;
+			thumnailContainer = new ScrollContainer();
+			thumnailContainer.layout = layout;
+			thumnailContainer.backgroundSkin = new Image(Texture.fromBitmapData(new BitmapData(150, 150, true, 0x80FF3300)));
+			thumnailContainer.x = 0;
+			thumnailContainer.y = 0;
+			thumnailContainer.width = thumNailSize + padding * 2;
+			thumnailContainer.height = this.stage.stageHeight;
+			thumnailContainer.verticalScrollPolicy = ScrollContainer.SCROLL_POLICY_ON;
+			thumnailContainer.horizontalScrollPolicy = ScrollContainer.SCROLL_POLICY_OFF;
+
+			addChild(thumnailContainer);
+			addChild(mainImageContainer);
 		}
 	}
 }
