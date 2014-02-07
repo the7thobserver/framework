@@ -102,6 +102,7 @@ package star
 			screenNavigator.addScreen(HOME_SCREEN, new ScreenNavigatorItem(HomeScreen));
 			screenNavigator.addScreen(BROWSE_SCREEN, new ScreenNavigatorItem(BrowseScreen));
 			screenNavigator.addScreen(POINTFINDER_SCREEN, new ScreenNavigatorItem(PointFinder));
+			
 			// Full control over which screen is being displayed. 
 			screenTransitionManager = new ScreenFadeTransitionManager(screenNavigator);
 		}

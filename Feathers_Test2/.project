@@ -20,16 +20,4 @@
 		<nature>com.adobe.flexbuilder.project.apollonature</nature>
 		<nature>com.adobe.flexbuilder.project.actionscriptnature</nature>
 	</natures>
-	<linkedResources>
-		<link>
-			<name>[source path] source</name>
-			<type>2</type>
-			<location>C:/Users/Nick/Documents/ActionScript 3.0/Library/feathers/source</location>
-		</link>
-		<link>
-			<name>[source path] src</name>
-			<type>2</type>
-			<location>C:/Users/Nick/Documents/ActionScript 3.0/Library/Starling_Framework/Starling-Framework-master/starling/src</location>
-		</link>
-	</linkedResources>
 </projectDescription>
