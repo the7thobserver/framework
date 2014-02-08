@@ -37,10 +37,11 @@ package screens
 		private var touchBeginX:int;
 		private var touchBeginY:int;
 		
-		// Temp main image holder
+		// Main image holder
 		private var mainImage:ImageLoader; 
 		
 		// Keep track of current image in array
+		// Note both arrays (thumnail and image) use the same index
 		private var index:int = 0;
 		
 		// Containers which I assume are like divs in http
@@ -48,10 +49,11 @@ package screens
 		private var thumnailContainer:ScrollContainer;
 		private var layout:VerticalLayout;
 		
+		// Path to where the images are
 		private var imagePath:String = "\\humanAssistPhotos\\"; 
 		
 		/*
-		Human assist
+			Human assist Variables
 		*/
 		
 		// brightness threshold
@@ -74,15 +76,16 @@ package screens
 			imageArray = new Array();
 			thumnailArray = new Array();
 			
-			// Initilze thumnail contain with thumbnails
+			// Initilze the containers which hold the pictures
 			buildContainers(); 
 			
-			// Load Pictures
+			// Load Pictures from the file path
 			loadPictures();
 			
 			// Initilize the thumbnails
 			initThumnails();
 			
+			// Add the mouse click event
 			this.addEventListener(TouchEvent.TOUCH, onTouch);
 		}
 		
@@ -94,11 +97,14 @@ package screens
 			{
 				switch(t.phase)
 				{	
+				// Equal to mouse down
 				case TouchPhase.BEGAN:
 					touchBeginX = t.globalX;
 					touchBeginY = t.globalY;
 					break;
+				// Equal to mouse up
 				case TouchPhase.ENDED:
+					// If the mouse moved < 10 then do not change the picture AKA user was scrolling the container
 					if(Math.abs(t.globalX - touchBeginX) < 10)
 					{
 						if(Math.abs(t.globalY - touchBeginY) < 10)
@@ -137,6 +143,9 @@ package screens
 			}
 		}
 		
+		/**
+		 * Loads each picture into a sized down thumbnail version of it into the scrolling container
+		 */ 
 		private function initThumnails():void
 		{
 			var temp:ImageLoader;
@@ -166,10 +175,12 @@ package screens
 			layout.verticalAlign = HorizontalLayout.VERTICAL_ALIGN_TOP;
 			layout.gap = 20;
 
+			// Giant center image
 			mainImageContainer = new LayoutGroup();
 			mainImageContainer.x = thumNailSize + 2 * padding;
 			mainImageContainer.y = 0;
 			
+			// Scrolling container on the left
 			thumnailContainer = new ScrollContainer();
 			thumnailContainer.layout = layout;
 			thumnailContainer.backgroundSkin = new Image(Texture.fromBitmapData(new BitmapData(150, 150, true, 0x80FF3300)));
@@ -184,6 +195,10 @@ package screens
 			addChild(mainImageContainer);
 		}
 		
+		/**
+		 *  Load pictures from image path into the arrays
+		 * Take note of the file extensions acceptable by the program
+		 */
 		private function loadPictures():void
 		{
 			var folder:File = File.applicationDirectory.resolvePath( File.applicationDirectory.nativePath + imagePath );
@@ -195,7 +210,6 @@ package screens
 			{
 				if(f.extension == 'jpg' || f.extension == 'JPG' || f.extension == 'png' || f.extension == 'PNG')
 				{
-					// TODO: Deep copy so don't double this stuff
 					var x:ImageLoader = new ImageLoader();
 					x.source = f.nativePath;
 					
@@ -356,6 +370,9 @@ package screens
 			return (0.2126 * r) + (0.7152 * g) + (0.0722 * b)
 		}
 		
+		/**
+		 * Makes a deep copy of a starling display object and returns a bitmapdata
+		 */
 		public function copyAsBitmapData(sprite:starling.display.DisplayObject):BitmapData {
 			if (sprite == null) 
 			{
