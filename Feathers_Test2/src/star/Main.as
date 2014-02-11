@@ -1,5 +1,7 @@
 package star
 {
+	import flash.display.Bitmap;
+	
 	import feathers.controls.Button;
 	import feathers.controls.Screen;
 	import feathers.controls.ScreenNavigator;
@@ -48,6 +50,7 @@ package star
 			// take care of setting up all the screens and putting them in the screen navigator 
 			setupScreens(); 
 			completeLayout(); // wrap everything up.
+			
 		}
 		
 		private function completeLayout():void

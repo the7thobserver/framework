@@ -2,15 +2,18 @@ package
 {
 	/* adobe flash platform, AS3, any IDE, */
 	
+	import flash.display.Bitmap;
 	import flash.display.Sprite;
 	import flash.display.StageAlign;
 	import flash.display.StageScaleMode;
 	import flash.events.Event;
+	import flash.events.TimerEvent;
 	import flash.geom.Rectangle;
 	
 	import star.Main;
 	
 	import starling.core.Starling;
+	import flash.utils.Timer;
 	
 	[SWF(frameRate = "60", backgroundColor = "0x000000", height="800", width="1200")]
 	
@@ -18,12 +21,24 @@ package
 	{
 		private var starling:Starling;
 		//private var mycomponent:MyComponent;
+		
+		
+		[Embed(source="../bin-debug/splash.png")]
+		private var Splash:Class;
+		private var splash:Bitmap;
+		
+		
 		public function Feathers_Test2()
 		{
+			splash = new Splash();
+			splash.addEventListener(Event.ENTER_FRAME, onAddedToStage);
+			addChild(splash);
+			
+			
 			stage.scaleMode = StageScaleMode.NO_SCALE;
 			stage.align = StageAlign.TOP_LEFT;
 			
-			loaderInfo.addEventListener(Event.COMPLETE, onLoadComplete);
+			// loaderInfo.addEventListener(Event.COMPLETE, onLoadComplete);
 		}
 		
 		protected function onLoadComplete(event:Event):void
@@ -47,6 +62,31 @@ package
 			
 			// apply to starling viewport
 			starling.viewPort = viewPort;
+		}
+		
+		//Call this once your first Starling view has rendered
+		public function removeSplash(event:TimerEvent):void
+		{
+			if (splash && splash.parent)
+			{
+				removeChild(splash);
+			}
+		}
+		
+		private function onAddedToStage(event:Event):void
+		{
+			splash.removeEventListener(Event.ENTER_FRAME, onAddedToStage);
+			
+			//Init Starling
+			Starling.handleLostContext = true;
+			var starling:Starling = new Starling(Main, stage);
+			//starling.antiAliasing = 1;
+			starling.start();
+			stage.addEventListener(Event.RESIZE, onStageResize);
+			
+			var timer:Timer = new Timer(1500);
+			timer.addEventListener(TimerEvent.TIMER, removeSplash); // will call callback()
+			timer.start();
 		}
 	}
 }
