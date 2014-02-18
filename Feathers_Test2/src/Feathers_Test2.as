@@ -9,11 +9,11 @@ package
 	import flash.events.Event;
 	import flash.events.TimerEvent;
 	import flash.geom.Rectangle;
+	import flash.utils.Timer;
 	
 	import star.Main;
 	
 	import starling.core.Starling;
-	import flash.utils.Timer;
 	
 	[SWF(frameRate = "60", backgroundColor = "0x000000", height="800", width="1200")]
 	
@@ -34,11 +34,10 @@ package
 			splash.addEventListener(Event.ENTER_FRAME, onAddedToStage);
 			addChild(splash);
 			
-			
 			stage.scaleMode = StageScaleMode.NO_SCALE;
 			stage.align = StageAlign.TOP_LEFT;
 			
-			// loaderInfo.addEventListener(Event.COMPLETE, onLoadComplete);
+			loaderInfo.addEventListener(Event.COMPLETE, onLoadComplete);
 		}
 		
 		protected function onLoadComplete(event:Event):void
@@ -77,15 +76,8 @@ package
 		{
 			splash.removeEventListener(Event.ENTER_FRAME, onAddedToStage);
 			
-			//Init Starling
-			Starling.handleLostContext = true;
-			var starling:Starling = new Starling(Main, stage);
-			//starling.antiAliasing = 1;
-			starling.start();
-			stage.addEventListener(Event.RESIZE, onStageResize);
-			
 			var timer:Timer = new Timer(1500);
-			timer.addEventListener(TimerEvent.TIMER, removeSplash); // will call callback()
+			timer.addEventListener(TimerEvent.TIMER, removeSplash); 
 			timer.start();
 		}
 	}

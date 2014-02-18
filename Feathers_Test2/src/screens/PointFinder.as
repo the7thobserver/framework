@@ -56,8 +56,8 @@ package screens
 			Human assist Variables
 		*/
 		
-		// brightness threshold
-		private const BRIGHTNESS_THRESHOLD:uint = 3500000;
+		// brightness threshold - 3400000
+		private const BRIGHTNESS_THRESHOLD:uint = 3400000;
 		
 		// box bound around mouse click area
 		private const BOUNDS:uint = 60;
@@ -109,11 +109,12 @@ package screens
 					{
 						if(Math.abs(t.globalY - touchBeginY) < 10)
 						{
-							trace("Target Name " + t.target.name);
+							// trace("Target Name " + t.target.name);
 							
 							if(t.target.name == "mainImage")
 							{
-								humanAssist(t);
+								// humanAssist(t);
+								drawRay(t);
 								//index = (index + 1)  % imageArray.length;
 								//mainImage = imageArray[index];
 							}	
@@ -265,6 +266,8 @@ package screens
 			for (var i:uint = location.x - BOUNDS; i < location.x + BOUNDS; i++) {
 				for (var j:uint = location.y - BOUNDS; j < location.y + BOUNDS; j++){
 					// If "brightness" is greater than a certain amount, color that pixel red
+					
+					// TODO
 					if (calcBrightness(bmd.getPixel(i, j)) > BRIGHTNESS_THRESHOLD) {
 						bmd.setPixel(i,j,RED); // set the pixel to red
 						totalPixels++; //increment the total number of pixels by 1
@@ -345,9 +348,12 @@ package screens
 			circle.graphics.clear();
 			circle.graphics.beginFill(RED, 0.0);
 			circle.graphics.lineStyle(2.0);
-			circle.graphics.drawCircle(x, y, radius-10); // -10 normalizes the radius of the circle
+			circle.graphics.drawCircle(x, y, radius); // -10 normalizes the radius of the circle
+			
 			circle.graphics.endFill();
 			bmd.draw(circle);
+			
+			//addChild(new Image(Texture.fromBitmapData(bmd)));
 			
 			// Update image
 			imageArray[index].source = Texture.fromBitmapData(bmd);
@@ -362,12 +368,61 @@ package screens
 		 * calcBrightness() is a function to calculate the brightness of a pixel
 		 */
 		private function calcBrightness(pixel:uint) :Number {
-			
 			var r:uint = RED & pixel; // get only the red value of the pixel
 			var g:uint = GREEN & pixel; // get only the green value of the pixel
 			var b:uint = BLUE & pixel; // get only the blue value of the pixel
 			
 			return (0.2126 * r) + (0.7152 * g) + (0.0722 * b)
+		}
+		
+		private function drawRay(event:Touch): void
+		{
+			var centerX:Number = mainImage.width / 2 + mainImageContainer.x;
+			var centerY:Number = mainImage.height / 2;
+			
+			// Find the opposite length
+			var opLength:Number = getDistance(event.globalX, event.globalX, centerY, event.globalY);
+			// Find the hyptonose length
+			var hypLength:Number = getDistance(centerX, event.globalX, centerY, event.globalY);
+			// Find the adjacent length
+			var adjLength:Number = getDistance(centerX, event.globalX, centerY, centerY); 
+			
+			var angle:Number = Math.asin(opLength / hypLength);
+			angle = angle * 180 / Math.PI;
+			
+			var slope:Number = opLength/adjLength;
+			
+			// bottom right
+			if(event.globalX >= centerX && event.globalY > centerY)
+			{
+				trace(-angle + " degrees");
+				slope = -slope;
+			}
+			// top left
+			else if(event.globalX < centerX && event.globalY <= centerY)
+			{
+				trace((-angle + 180) + " degrees");
+				slope = -slope;
+			}
+			// bottom left
+			else if(event.globalX < centerX && event.globalY > centerY)
+			{
+				trace((angle - 180) + " degrees");
+			}
+			// top right
+			else
+			{
+				trace(angle + " degrees");
+			}
+			
+			
+			trace("Line equation: " + slope + "x");
+		}
+		
+		private function getDistance(x:Number , x1:Number, y:Number, y1:Number): Number
+		{
+			// c^2 = (a - a1)^2 + (b - b1)^2
+			return Math.sqrt(Math.pow(x-x1, 2) + Math.pow(y-y1, 2));
 		}
 		
 		/**
