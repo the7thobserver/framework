@@ -17,7 +17,9 @@ package
 	public class Feathers_Test2 extends Sprite
 	{
 		private var starling:Starling;
-		//private var mycomponent:MyComponent;
+		
+		private var viewPort:Rectangle;
+		
 		public function Feathers_Test2()
 		{
 			stage.scaleMode = StageScaleMode.NO_SCALE;
@@ -29,11 +31,15 @@ package
 		protected function onLoadComplete(event:Event):void
 		{
 			// Set up Starlring
-			//Starling.handleLostContext = true;
 			starling = new Starling(Main, stage);
 			starling.start();
+			
+			// initialize the viewport
+			viewPort = new Rectangle();
+			
 			// add event listeners to stage
-			stage.addEventListener(Event.RESIZE, onStageResize); 
+			stage.addEventListener(Event.RESIZE, onStageResize);
+			
 		}
 		
 		protected function onStageResize(event:Event):void
@@ -41,7 +47,7 @@ package
 			starling.stage.stageWidth = stage.stageWidth;
 			starling.stage.stageHeight = stage.stageHeight;
 			
-			const viewPort:Rectangle = starling.viewPort; 
+			viewPort = starling.viewPort; 
 			viewPort.width = stage.stageWidth;
 			viewPort.height = stage.stageHeight;
 			

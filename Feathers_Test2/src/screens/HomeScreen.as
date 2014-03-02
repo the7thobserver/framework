@@ -10,7 +10,7 @@ package screens
 	
 	public class HomeScreen extends Screen
 	{
-		[Embed(source="/../assets/images/blue_skeleton.jpg")]
+		[Embed(source="/../assets/screen images/blue_skeleton.jpg")]
 		private static const TitleImage:Class; // use this to refer to the image data
 		
 		private var scrollContainer:ScrollContainer;	// feathers object

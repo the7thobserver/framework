@@ -89,16 +89,16 @@ package feathers.themes
 
 	public class MetalWorksMobileTheme extends DisplayListWatcher
 	{
-		[Embed(source="/../assets/images/metalworks.png")]
+		[Embed(source="/../Libraries/Feathers/themes/MetalWorksMobileTheme/assets/images/metalworks.png")]
 		protected static const ATLAS_IMAGE:Class;
 
-		[Embed(source="/../assets/images/metalworks.xml",mimeType="application/octet-stream")]
+		[Embed(source="/../Libraries/Feathers/themes/MetalWorksMobileTheme/assets/images/metalworks.xml",mimeType="application/octet-stream")]
 		protected static const ATLAS_XML:Class;
 
-		[Embed(source="/../assets/fonts/SourceSansPro-Regular.ttf",fontName="SourceSansPro",mimeType="application/x-font",embedAsCFF="false")]
+		[Embed(source="/../Libraries/Feathers/themes/MetalWorksMobileTheme/assets/fonts/SourceSansPro-Regular.ttf",fontName="SourceSansPro",mimeType="application/x-font",embedAsCFF="false")]
 		protected static const SOURCE_SANS_PRO_REGULAR:Class;
 
-		[Embed(source="/../assets/fonts/SourceSansPro-Semibold.ttf",fontName="SourceSansProSemibold",fontWeight="bold",mimeType="application/x-font",embedAsCFF="false")]
+		[Embed(source="/../Libraries/Feathers/themes/MetalWorksMobileTheme/assets/fonts/SourceSansPro-Semibold.ttf",fontName="SourceSansProSemibold",fontWeight="bold",mimeType="application/x-font",embedAsCFF="false")]
 		protected static const SOURCE_SANS_PRO_SEMIBOLD:Class;
 
 		protected static const PRIMARY_BACKGROUND_COLOR:uint = 0x4a4137;
