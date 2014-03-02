@@ -1,9 +1,6 @@
 package star
 {
-	import flash.display.Bitmap;
-	
-	import feathers.controls.Button;
-	import feathers.controls.Screen;
+
 	import feathers.controls.ScreenNavigator;
 	import feathers.controls.ScreenNavigatorItem;
 	import feathers.controls.TabBar;
@@ -11,9 +8,7 @@ package star
 	import feathers.motion.transitions.ScreenFadeTransitionManager;
 	import feathers.themes.MetalWorksMobileTheme;
 	
-	import screens.BrowseScreen;
-	import screens.HomeScreen;
-	import screens.PointFinder;
+	import screens.*;
 	
 	import starling.display.Sprite;
 	import starling.events.Event;
@@ -29,12 +24,14 @@ package star
 		
 		private static const HOME_SCREEN:String = "homeScreen"; 
 		private static const BROWSE_SCREEN:String = "browseScreen"; 
-		private static const POINTFINDER_SCREEN:String = "pointFinder"; 
+		private static const POINTFINDER_SCREEN:String = "pointFinder";
+		private static const DISPLAY_SCREEN:String = "displayScreen";
+		private static const SETTINGS_SCREEN:String = "settingsScreen";
 		
 		
 		
 		/*
-			Description - screen navigator instance - displays current screen and handling transitions between screens. 
+		Description - screen navigator instance - displays current screen and handling transitions between screens. 
 		*/ 
 		
 		public function Main()
@@ -63,6 +60,7 @@ package star
 			screenNavigator.y = navHeight;
 			screenNavigator.width = stage.stageWidth;
 			screenNavigator.height = stage.stageHeight-navHeight;
+			
 			addChild(screenNavigator);
 		}
 		
@@ -74,9 +72,10 @@ package star
 			navigationBar = new TabBar();
 			navigationBar.dataProvider = new ListCollection([
 				{label:"Home", data:HOME_SCREEN},
-				{label:"Picture Studio" , data:BROWSE_SCREEN},
+				{label:"Camera Feeds" , data:BROWSE_SCREEN},
 				{label:"Reflector Association Process" , data:POINTFINDER_SCREEN},
-				{label:"3-D Display", data:BROWSE_SCREEN},
+				{label:"3-D Display", data:DISPLAY_SCREEN},
+				{label:"Settings", data:SETTINGS_SCREEN},
 			]);
 			
 			navigationBar.selectedIndex  = 2; // loads homescreens
@@ -103,8 +102,10 @@ package star
 		{
 			screenNavigator = new ScreenNavigator();
 			screenNavigator.addScreen(HOME_SCREEN, new ScreenNavigatorItem(HomeScreen));
-			screenNavigator.addScreen(BROWSE_SCREEN, new ScreenNavigatorItem(BrowseScreen));
+			screenNavigator.addScreen(BROWSE_SCREEN, new ScreenNavigatorItem(CameraScreen));
 			screenNavigator.addScreen(POINTFINDER_SCREEN, new ScreenNavigatorItem(PointFinder));
+			screenNavigator.addScreen(DISPLAY_SCREEN, new ScreenNavigatorItem(DisplayScreen));
+			screenNavigator.addScreen(SETTINGS_SCREEN, new ScreenNavigatorItem(SettingsScreen));
 			
 			// Full control over which screen is being displayed. 
 			screenTransitionManager = new ScreenFadeTransitionManager(screenNavigator);
