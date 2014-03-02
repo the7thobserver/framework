@@ -113,9 +113,19 @@ package screens
 		private var r2:Vector3D;
 		
 		private var centerPoint:Array;
+		private var calibXPoints:Array;
+		private var calibYPoints:Array;
+		private var calibMPoints:Array;
+		private var calibIndex:int = 0;
 		
 		private var bCalib:Button;
 		private var isCalibrating:Boolean = false;
+		private var calibStage:int = 0;
+		
+		private var vStep:Number;
+		private var hStep:Number;
+		private var mStep:Number;
+		
 		  ///////////////////////
 		 //     Functions     //
 		///////////////////////
@@ -141,6 +151,9 @@ package screens
 			numThumbNails = 3;
 			
 			centerPoint = new Array();
+			calibXPoints = new Array();
+			calibYPoints = new Array();
+			calibMPoints = new Array();
 			
 			for(var i:int = 0; i < numThumbNails; i++)
 			{
@@ -312,12 +325,33 @@ package screens
 		
 		private function setCenter(target:Touch, index:int):int
 		{
+			var point:Point = findCenter(target);
+			
+			// If x or y comes out to be Not A Number cal return -1 (error)
+			if(isNaN(point.x) || isNaN(point.y))
+			{
+				textField.text = "Error calibrating current picture. Please select the center again.";
+				return -1;	
+			}
+			
+			trace("Center - index " + index + " to " + point);
+			
+			centerPoint[index] = point; 
+			
+			return 0;
+		}		
+
+		/**
+		 * Finds the center of a dot in the picture
+		 */
+		private function findCenter(target:Touch):Point
+		{
 			// Get location of mouse click
 			var location:Point = new Point(target.globalX + X_SCALE, target.globalY + Y_SCALE);
 			// trace("coordinates - x: " + location.x + ", y: " + location.y);
 			
 			var bmd:BitmapData = copyAsBitmapData(mainImage);
-
+			
 			// variables used to calculate average positions of pixels
 			var sumXCoords:uint = 0;
 			var sumYCoords:uint = 0;
@@ -340,23 +374,10 @@ package screens
 			var x:Number = sumXCoords/totalPixels;
 			var y:Number = sumYCoords/totalPixels;
 			
-			var point:Point;
-			
-			// If x or y comes out to be Not A Number cal return -1 (error)
-			if(isNaN(x) || isNaN(y))
-			{
-				textField.text = "Error calibrating current picture. Please select the center again.";
-				return -1;	
-			}
-			
-			point = new Point(x,y);
-			
-			trace("Center - index " + index + " to " + point);
-			
-			centerPoint[index] = point; 
-			
-			return 0;
-		}		
+			var point:Point = new Point(x,y);
+		
+			return point;
+		}
 		
 		/**
 		 * Loads each picture into a sized down thumbbnail version of it into the scrolling container
@@ -611,15 +632,15 @@ package screens
 			var centerY:Number = centerPoint[index].y;
 			var FOV:Number = 25.9;
 			
-			trace("Current Center is " + centerX + ", " + centerY);
+			// trace("Current Center is " + centerX + ", " + centerY);
 			
 			// Pixels/cm
 			// 21.043 / 21.58
 			//var vStep:Number = 21.043;
-			var hStep:Number = 21.58;
+			//var hStep:Number = 21.58;
 			
 			// recalc pix/cm
-			var vStep:Number = 1 / 8.84514436;
+			//var vStep:Number = 1 / 8.84514436;
 			//var hStep:Number = 9.04199478;
 			
 			if(clicks == 0)
@@ -632,7 +653,8 @@ package screens
 				point1.y = (centerY - y) * hStep;
 				point1.z = 0;
 				
-				trace("1 point " + x + " pixels -> " + point1.x + "cms from center");
+				// trace("1 point " + x + " pixels -> " + point1.x + "cms from center");
+				trace(point1);
 				
 				clicks++;
 			}
@@ -643,8 +665,9 @@ package screens
 				point2.x = (centerX - x) * vStep;
 				point2.y = (centerY - y) * hStep;
 				point2.z = 0;
-				
-				trace("2 point " + x + " pixels -> "  + point2.x + " cms from center");
+				//trace("Y Points " + point1.y + " " + point2.y);
+				trace(point2);
+				// trace("2 point " + x + " pixels -> "  + point2.x + " cms from center");
 				
 				// Find magnatude
 				point1.x;
@@ -653,6 +676,7 @@ package screens
 				var mz:Number = Math.pow(point1.z - camera1.z, 2);
 				
 				var magnitude:Number = Math.sqrt(mx + my + mz);
+				trace("Mag " + magnitude + " " + mx + " " + my + " " +mz);
 				
 				// Create rays
 				r1 = new Vector3D();
@@ -666,7 +690,6 @@ package screens
 				mz = Math.pow(point2.z - camera2.z, 2);
 				
 				magnitude = Math.sqrt(mx + my + mz);
-				
 				
 				r2 = new Vector3D();
 				r2.x = (point2.x - camera2.x) * (1 / magnitude);
@@ -905,12 +928,206 @@ package screens
 		
 		private function calibrate(target:Touch, index:int):int
 		{
-			// If set center == -1 (got NaN) then return - the number doesn't matter, index doesn't increment
-			// Currently returns index, in case things change
-			if(setCenter(target, index) == -1)
-				return index;
+			switch(calibStage)
+			{
+				case 0:
+					// If set center == -1 (got NaN) then return - the number doesn't matter, index doesn't increment
+					// Currently returns index, in case things change
+					if(setCenter(target, index) == -1)
+						return index;
+					textField.text = "Please select the top middle dot";
+					
+					calibStage++;
+					break;
+				case 1:
+					if(calibrateY(target) == -1)
+						return index;
+					
+					textField.text = "Please select the bottom middle dot";
+					
+					// Needs to do this 2x because 2 dots on the x-axis calibrator
+					if(calibIndex == 2)
+					{
+						calibStage++;
+						calibIndex = 0;
+						textField.text = "Please select the center left dot";
+					}
+					
+					break;
+				case 2:
+					if(calibrateX(target) == -1)
+						return index;
+					
+					textField.text = "Please select the center right dot";
+					
+					
+					// Needs to do this 2x because 2 dots on the y-axis calibrator
+					if(calibIndex == 2)
+					{
+						calibStage++;
+						calibIndex = 0;
+						textField.text = "Please select the top left dot";
+					}
+					
+					break;
+				case 3:
+					if(calibrateM(target) == -1)
+						return index;
+					
+					textField.text = "Please select the top left dot";
+					
+					// Need to do this 4x because 4 dots for the m
+					// Will never be calibIndex 0
+					if(calibIndex == 1)
+						textField.text = "Please select the bottom left dot";
+					else if(calibIndex == 2)
+						textField.text = "Please select the bottom right dot";
+					else if(calibIndex == 3)
+						textField.text = "Please select the top right dot";
+					else if(calibIndex == 4)
+					{
+						calibStage++;
+						calibIndex = 0;
+						isCalibrating = false;
+					}
+					
+					break;
+				default:
+					trace("Something went wrong with calibration");
+					return index;
+			}
 			
-			nextImage();
+			// trace("Stage # " + calibStage);
+			
+			
+			
+			// Number of points = 8 on the calibrator
+			if(calibStage == 4)
+			{
+				textField.text = "CALIBRATION COMPLETE";
+
+				calibrationCalculations();
+				
+				calibStage = 0;
+			}
+			
+			return 0;
+		}
+		
+		private function calibrationCalculations():void
+		{
+			// TODO do we want the distance between the points instead of raw x/y distances 
+			// Left + right x distances / 2
+			vStep = (centerPoint[0].x - calibXPoints[0].x) / calibrator.x;
+			vStep -= (centerPoint[0].x - calibXPoints[1].x) / calibrator.x;
+			vStep = vStep / 2;
+			vStep = 1 / vStep;
+			
+			
+			trace("vStep " + vStep);
+			
+			// Top + bottom y distances / 2
+			hStep = (centerPoint[0].y - calibYPoints[0].y) / calibrator.y;
+			hStep -= (centerPoint[0].y - calibYPoints[1].y) / calibrator.y;
+			hStep = -hStep / 2;
+			hStep = 1 / hStep;
+			
+			trace("hStep " + hStep);
+			
+			// How much image distortion there is by comparing slopes
+			// Top right with bottom left
+			// Bottom right with top left
+			var m:Number;
+			var m1:Number;
+			
+			m = (centerPoint[0].x - calibMPoints[0].x) / (centerPoint[0].y - calibMPoints[0].y); 
+			m1 = (centerPoint[0].x - calibMPoints[2].x) / (centerPoint[0].y - calibMPoints[2].y);
+			
+			//trace(m + " " + m1);
+			//trace("Differ in +m " + (m1 - m));
+			
+			m = (centerPoint[0].x - calibMPoints[3].x) / (centerPoint[0].y - calibMPoints[3].y);
+			m1 = (centerPoint[0].x - calibMPoints[1].x) / (centerPoint[0].y - calibMPoints[1].y);
+			
+			//trace(m + " " + m1);
+			//trace("Differ in -m " + (m1 - m));
+		}
+		
+		private function calibrateM(target:Touch):int
+		{
+			var point:Point = findCenter(target);
+			
+			if(isNaN(point.x) || isNaN(point.y))
+			{
+				if(calibIndex == 0)
+					textField.text = "Error calibrating: Please select the top left";
+				else if(calibIndex == 1)
+					textField.text = "Error calibrating: Please select the top right";
+				else if(calibIndex == 2)
+					textField.text = "Error calibrating: Please select the bottom left";
+				else if(calibIndex == 3)
+					textField.text = "Error calibrating: Please select the bottom right";
+				else
+					trace("Something went wrong calibrating m");
+					
+				return index;
+			}
+			
+			calibMPoints[calibIndex] = point;
+			
+			// trace("M " + calibIndex + " " + point);
+			
+			calibIndex++;
+			
+			return 0;
+		}
+		
+		private function calibrateY(target:Touch):int
+		{
+			var point:Point = findCenter(target);
+			
+			if(isNaN(point.x) || isNaN(point.y))
+			{
+				if(calibIndex == 0)
+					textField.text = "Error calibrating: Please select the center left";
+				else if(calibIndex == 1)
+					textField.text = "Error calibrating: Please select the center right";
+				else
+					trace("Something went wrong calibrating y");
+				
+				return index;
+			}
+			
+			calibYPoints[calibIndex] = point;
+			
+			// trace("Y " + calibIndex + " " + point);
+			
+			calibIndex++;
+			
+			return 0;
+		}
+		
+		private function calibrateX(target:Touch):int
+		{
+			var point:Point = findCenter(target);
+			
+			if(isNaN(point.x) || isNaN(point.y))
+			{
+				if(calibIndex == 0)
+					textField.text = "Error calibrating: Please select the top middle";
+				else if(calibIndex == 1)
+					textField.text = "Error calibrating: Please select the bottom middle";
+				else
+					trace("Something went wrong calibrating x");
+				
+				return index;
+			}
+			
+			calibXPoints[calibIndex] = point;
+			
+			trace("X " + calibIndex + " " + point);
+			
+			calibIndex++;
 			
 			return 0;
 		}
