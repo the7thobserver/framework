@@ -104,9 +104,10 @@ package screens
 		private var numThumbNails:int;
 		
 		// Holds the distances between the dots in the coresponding direction in cm : W is the distance to the edge of the board
-		private var calibrator:Vector3D = new Vector3D(19.05,19.05,0 , 30.5);
-		private var camera1:Vector3D = new Vector3D(6, 0, -45.5);
-		private var camera2:Vector3D = new Vector3D(-6, 0,-45.5);
+		// Unsure about the 30.5
+		private var calibrator:Vector3D = new Vector3D(-.250,0.2, 0 , 30.5);
+		private var camera1:Vector3D = new Vector3D(0.08, -0.25, -1.7);
+		private var camera2:Vector3D = new Vector3D(-0.29, -0.25, 1.53);
 		private var point1:Vector3D;
 		private var point2:Vector3D;
 		private var r1:Vector3D;
