@@ -105,8 +105,8 @@ package screens
 		
 		// Holds the distances between the dots in the coresponding direction in cm : W is the distance to the edge of the board
 		private var calibrator:Vector3D = new Vector3D(19.05,19.05,0 , 30.5);
-		private var camera1:Vector3D = new Vector3D(6, -45.5, 0);
-		private var camera2:Vector3D = new Vector3D(-6,-45.5,0);
+		private var camera1:Vector3D = new Vector3D(6, 0, -45.5);
+		private var camera2:Vector3D = new Vector3D(-6, 0,-45.5);
 		private var point1:Vector3D;
 		private var point2:Vector3D;
 		private var r1:Vector3D;
@@ -641,6 +641,7 @@ package screens
 			
 			// recalc pix/cm
 			//var vStep:Number = 1 / 8.84514436;
+			//vStep =  1 / 8.84514436;
 			//var hStep:Number = 9.04199478;
 			
 			if(clicks == 0)
@@ -654,6 +655,8 @@ package screens
 				point1.z = 0;
 				
 				// trace("1 point " + x + " pixels -> " + point1.x + "cms from center");
+				trace("Center " + centerX + " " + centerY);
+				trace(x + " " + y);
 				trace(point1);
 				
 				clicks++;
@@ -666,6 +669,8 @@ package screens
 				point2.y = (centerY - y) * hStep;
 				point2.z = 0;
 				//trace("Y Points " + point1.y + " " + point2.y);
+				trace("Center " + centerX + " " + centerY);
+				trace(x + " " + y);
 				trace(point2);
 				// trace("2 point " + x + " pixels -> "  + point2.x + " cms from center");
 				
