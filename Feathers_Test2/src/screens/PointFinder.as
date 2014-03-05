@@ -7,7 +7,6 @@ package screens
 	import flash.geom.Point;
 	import flash.geom.Rectangle;
 	import flash.geom.Vector3D;
-	import flash.net.sendToURL;
 	
 	import feathers.controls.Button;
 	import feathers.controls.ImageLoader;
@@ -101,13 +100,13 @@ package screens
 		private var x1:Number, x2:Number;
 		private var clicks:Number = 0;
 		
-		private var numThumbNails:int;
+		private var numThumbNails:int = 0;
 		
 		// Holds the distances between the dots in the coresponding direction in cm : W is the distance to the edge of the board
 		// Unsure about the 30.5
 		private var calibrator:Vector3D = new Vector3D(-.250,0.2, 0 , 30.5);
 		private var camera1:Vector3D = new Vector3D(0.08, -0.25, -1.7);
-		private var camera2:Vector3D = new Vector3D(-0.29, -0.25, 1.53);
+		private var camera2:Vector3D = new Vector3D(-0.29, -0.25, -1.53);
 		private var point1:Vector3D;
 		private var point2:Vector3D;
 		private var r1:Vector3D;
@@ -126,6 +125,9 @@ package screens
 		private var vStep:Number;
 		private var hStep:Number;
 		private var mStep:Number;
+		
+		// TEMP - see calibration comment
+		private var c_FirstImage:Boolean = true;
 		
 		  ///////////////////////
 		 //     Functions     //
@@ -149,8 +151,6 @@ package screens
 			right_hip = new Point();
 			
 			// Initilize center points array
-			numThumbNails = 3;
-			
 			centerPoint = new Array();
 			calibXPoints = new Array();
 			calibYPoints = new Array();
@@ -190,7 +190,6 @@ package screens
 			bCalib.addEventListener(starling.events.Event.TRIGGERED, startCalibrate);
 		}
 		
-		
 		/**
 		 * Override of initialize() function used to set up containers on the screen
 		 */
@@ -202,6 +201,9 @@ package screens
 			// Load Pictures from the file path
 			loadPictures();
 			
+			// REMOVE
+			numThumbNails = 2;
+			
 			// Initilize the thumbbnails
 			initThumbbnails();
 			
@@ -209,8 +211,7 @@ package screens
 			addChild(textField);
 			addChild(bCalib);
 		}
-		
-		
+			
 		/**
 		 * Event handler to determine which actions to take when the screen is clicked on
 		 */
@@ -238,12 +239,26 @@ package screens
 								// If inside the main image y-wise
 								if(t.globalY > -Y_SCALE)
 								{
-									// Let's calibrate (find the middle image)
-									calibrate(t, index);	
+									if(c_FirstImage)
+										// Let's calibrate (find the middle image)
+										calibrate(t, index);	
+									else
+									{
+										trace("IN THE TOUCH");
+										// TEMP - I believe using the x,y scaling from the first image is good enough for the others
+										if(setCenter(t, index) == -1)
+										{
+											// Got an invalid point
+											index--;
+										}
+										
+										nextImage();
+									}
+									
 								}
 							}	
 						}
-						else
+						else // not calibrating
 						{
 							// If the mouse moved < 10 then do not change the picture AKA user was scrolling the container
 							if(Math.abs(t.globalX - touchBeginX) < 10) {
@@ -255,16 +270,20 @@ package screens
 									
 									// user clicked main image
 									if(t.target.name == "mainImage") {
-										// If the user hasn't calibrated, then we're going to force them to			
-										if(centerPoint[index] == 0)
+										
+										trace("CENTERPOINTS " + centerPoint[index] + " at index " + index);
+										
+										// If the user hasn't calibrated, then we're going to force them to
+										if(centerPoint[index] == 0 || !centerPoint[index])
 										{
+											trace("CALIB");
 											isCalibrating = true;
 											textField.text = "Beginning calibration, please select the center";
 											setCenter(t, index);
 										}
 										else
 										{
-											// trace("human assist called");
+											//trace("human assist called");
 											humanAssist(t);
 										}
 										
@@ -272,41 +291,18 @@ package screens
 										/*
 										for(var i:int = 0; i < numThumbNails; i++)
 											trace(centerPoint[i]);
-										*/
-										
-									}	
-									
-									// user clicked 1st thumbnail
-									else if(t.target.name == "thumbnail0") {
-										mainImage = imageArray[0];
-										
-										// reset the state
-										state = 0;
-										
-										// set the array index
-										index = 0;
+										*/	
 									}
-									
-									// user clicked 2nd thumbnail
-									else if(t.target.name == "thumbnail1") {
-										mainImage = imageArray[1];
-										
-										// reset the state
-										state = 0;
-										
-										// set the array index
-										index = 1;
-									}
-									
-									// user clicked 3rd thumbnail
-									else if(t.target.name == "thumbnail2") {
-										mainImage = imageArray[2];
-										
-										// reset the state
-										state = 0;
-										
-										// set the array index
-										index = 2;
+									else
+									{
+										// Make sure the user isn't touching the container of thumbnails or somewhere else invalid
+										if(t.target.name != null)
+										{
+											// Dynamically get the thumbnail clicked
+											index = int(t.target.name.substring(t.target.name.length - 1, t.target.name.length));
+											mainImage = imageArray[index];
+											state = 0;
+										}
 									}
 									
 									// set correct sizes of the image
@@ -331,6 +327,7 @@ package screens
 			// If x or y comes out to be Not A Number cal return -1 (error)
 			if(isNaN(point.x) || isNaN(point.y))
 			{
+				trace("Invalid point");
 				textField.text = "Error calibrating current picture. Please select the center again.";
 				return -1;	
 			}
@@ -447,10 +444,13 @@ package screens
 			
 			// temporary index
 			var index:int = 0;
-			
+		
 			for each(var f:File in fileArray) {
 				// check file extensions
 				if(f.extension == 'jpg' || f.extension == 'JPG' || f.extension == 'png' || f.extension == 'PNG') {
+					// Keep track of the number of images
+					numThumbNails++;
+					
 					// load images into thumbnail array
 					var thumbnail_loader:ImageLoader = new ImageLoader();
 					thumbnail_loader.source = f.nativePath;
@@ -627,11 +627,24 @@ package screens
 			updateStateAfterClick(x, y, bmd);
 			
 			// trace("updating image");
+			createRay(x, y);
 			
+			// Update image
+			imageArray[index].source = Texture.fromBitmapData(bmd);
+			
+			// Update main image
+			mainImage = imageArray[index];
+			
+			// Update thumbbnail
+			//thumbnailArray[index].source = Texture.fromBitmapData(bmd);
+		}
+		
+		private function createRay(x:Number, y:Number):void
+		{
 			// Point finding stuff
 			var centerX:Number = centerPoint[index].x;
 			var centerY:Number = centerPoint[index].y;
-			var FOV:Number = 25.9;
+			//var FOV:Number = 25.9;
 			
 			// trace("Current Center is " + centerX + ", " + centerY);
 			
@@ -713,24 +726,75 @@ package screens
 				trace("lhs " + lhs);
 				trace("rhs " + rhs);
 				
+				// equation 1 p1 + r1*t
+				// equation 2 p2 + r2*t
+				// d=((p1+r1*t) - (p2+r2*t))^2
+				// find lowest point
+				/*
+				var t:Number;
+				for(t = 1; t < 100; t++)
+				{
+					// create equation 1
+					var tempPT1:Vector3D = point1.clone();
+					var tempR1:Vector3D = new Vector3D();
+					
+					tempR1.x = r1.x * t;
+					tempR1.y = r1.y * t;
+					tempR1.z = r1.z * t;
+					
+					// create equation 2
+					var tempPT2:Vector3D = point2.clone();
+					var tempR2:Vector3D = new Vector3D();
+					
+					tempR2.x = r2.x * t;
+					tempR2.y = r2.y * t;
+					tempR2.z = r2.z * t;
+					
+					var result:Vector3D = tempPT1.add(tempR1).subtract(tempPT2.add(tempR2));
+					
+				}
+				// var lok:Vector3D = point1.add(r1 * t).subtract(point2.add(r2 * t));
+					*/
+				
 				var fx:Number = lhs.x / rhs.x;
 				var fy:Number = lhs.y / rhs.y;
 				var fz:Number = lhs.z / rhs.z;
 				
 				trace("Result " + fx + " " + fy + " " + fz);
 				
+				var minVect:Vector3D = new Vector3D(100,100,100);
+				var minT:Number;
+				for(var t:Number = 0; t < 20; t=t+0.01)
+				{
+					var tempVect:Vector3D = rhs.clone();
+					
+					tempVect.x *= t;
+					tempVect.y *= t;
+					tempVect.z *= t;
+					
+					tempVect = lhs.subtract(tempVect);
+					
+					if(tempVect.lengthSquared < minVect.lengthSquared)
+					{
+						minVect = tempVect;
+						minT = t;
+						trace(Math.sqrt(tempVect.lengthSquared) + " " + Math.sqrt(minVect.lengthSquared) + " " + minT);
+					}
+					
+					
+				}
+				r1.x = r1.x * minT;
+				r1.y = r1.y * minT;
+				r1.z = r1.z * minT;
+				
+				point1 = point1.add(r1);
+				trace(point1);
+				
+				
 				clicks = 0;
-			}
-			
-			// Update image
-			imageArray[index].source = Texture.fromBitmapData(bmd);
-			
-			// Update main image
-			mainImage = imageArray[index];
-			
-			// Update thumbbnail
-			//thumbnailArray[index].source = Texture.fromBitmapData(bmd);
-		}
+			}	
+		}		
+		
 			
 		/**
 		 * Function for handling what happens after a user clicks on the image
@@ -994,7 +1058,6 @@ package screens
 					{
 						calibStage++;
 						calibIndex = 0;
-						isCalibrating = false;
 					}
 					
 					break;
@@ -1010,11 +1073,14 @@ package screens
 			// Number of points = 8 on the calibrator
 			if(calibStage == 4)
 			{
-				textField.text = "CALIBRATION COMPLETE";
+				textField.text = "FIRST IMAGE CALIBRATION COMPLETE, PLEASE SELECT THE CENTER DOT";
 
 				calibrationCalculations();
 				
 				calibStage = 0;
+				
+				c_FirstImage = false;
+				nextImage();
 			}
 			
 			return 0;
@@ -1024,8 +1090,11 @@ package screens
 		{
 			// TODO do we want the distance between the points instead of raw x/y distances 
 			// Left + right x distances / 2
-			vStep = (centerPoint[0].x - calibXPoints[0].x) / calibrator.x;
-			vStep -= (centerPoint[0].x - calibXPoints[1].x) / calibrator.x;
+			
+			// TODO : DOEsnT HaVE TO BE 0~!
+			
+			vStep = (centerPoint[index].x - calibXPoints[0].x) / calibrator.x;
+			vStep -= (centerPoint[index].x - calibXPoints[1].x) / calibrator.x;
 			vStep = vStep / 2;
 			vStep = 1 / vStep;
 			
@@ -1033,8 +1102,8 @@ package screens
 			trace("vStep " + vStep);
 			
 			// Top + bottom y distances / 2
-			hStep = (centerPoint[0].y - calibYPoints[0].y) / calibrator.y;
-			hStep -= (centerPoint[0].y - calibYPoints[1].y) / calibrator.y;
+			hStep = (centerPoint[index].y - calibYPoints[0].y) / calibrator.y;
+			hStep -= (centerPoint[index].y - calibYPoints[1].y) / calibrator.y;
 			hStep = -hStep / 2;
 			hStep = 1 / hStep;
 			
@@ -1046,14 +1115,14 @@ package screens
 			var m:Number;
 			var m1:Number;
 			
-			m = (centerPoint[0].x - calibMPoints[0].x) / (centerPoint[0].y - calibMPoints[0].y); 
-			m1 = (centerPoint[0].x - calibMPoints[2].x) / (centerPoint[0].y - calibMPoints[2].y);
+			m = (centerPoint[index].x - calibMPoints[0].x) / (centerPoint[index].y - calibMPoints[0].y); 
+			m1 = (centerPoint[index].x - calibMPoints[2].x) / (centerPoint[index].y - calibMPoints[2].y);
 			
 			//trace(m + " " + m1);
 			//trace("Differ in +m " + (m1 - m));
 			
-			m = (centerPoint[0].x - calibMPoints[3].x) / (centerPoint[0].y - calibMPoints[3].y);
-			m1 = (centerPoint[0].x - calibMPoints[1].x) / (centerPoint[0].y - calibMPoints[1].y);
+			m = (centerPoint[index].x - calibMPoints[3].x) / (centerPoint[index].y - calibMPoints[3].y);
+			m1 = (centerPoint[index].x - calibMPoints[1].x) / (centerPoint[index].y - calibMPoints[1].y);
 			
 			//trace(m + " " + m1);
 			//trace("Differ in -m " + (m1 - m));
@@ -1144,7 +1213,9 @@ package screens
 			{
 				isCalibrating = false;
 				textField.text = "Calibration complete";
-				return;
+				//return;
+				// For circular-ness
+				index = -1;
 			}
 			
 			index++;

@@ -8,7 +8,11 @@ package star
 	import feathers.motion.transitions.ScreenFadeTransitionManager;
 	import feathers.themes.MetalWorksMobileTheme;
 	
-	import screens.*;
+	import screens.CameraScreen;
+	import screens.DisplayScreen;
+	import screens.HomeScreen;
+	import screens.PointFinder;
+	import screens.SettingsScreen;
 	
 	import starling.display.Sprite;
 	import starling.events.Event;
