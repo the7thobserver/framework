@@ -104,7 +104,7 @@ package screens
 		
 		// Holds the distances between the dots in the coresponding direction in cm : W is the distance to the edge of the board
 		// Unsure about the 30.5
-		private var calibrator:Vector3D = new Vector3D(-.250,0.2, 0 , 30.5);
+		private var calibrator:Vector3D = new Vector3D(0.25,0.2, 0 , 30.5);
 		private var camera1:Vector3D = new Vector3D(0.08, -0.25, -1.7);
 		private var camera2:Vector3D = new Vector3D(-0.29, -0.25, -1.53);
 		private var point1:Vector3D;
@@ -121,24 +121,24 @@ package screens
 		private var bCalib:Button;
 		private var isCalibrating:Boolean = false;
 		private var calibStage:int = 0;
+		// 0 = x, 1 = y
+		private var calibStep:Array;
 		
-		private var vStep:Number;
-		private var hStep:Number;
-		private var mStep:Number;
+		//private var vStep:Number;
+		//private var hStep:Number;
+		//private var mStep:Number;
 		
 		// TEMP - see calibration comment
-		private var c_FirstImage:Boolean = true;
+		//private var c_FirstImage:Boolean = true;
 		
 		  ///////////////////////
 		 //     Functions     //
 		///////////////////////
-		
-		
+			
 		/**
 		 * Constructor
 		 */
 		public function PointFinder() {
-			
 			// create layout objects
 			layout = new VerticalLayout();
 			thumbnailContainer = new ScrollContainer();
@@ -150,11 +150,12 @@ package screens
 			left_hip = new Point();
 			right_hip = new Point();
 			
-			// Initilize center points array
+			// Initilize arrays
 			centerPoint = new Array();
 			calibXPoints = new Array();
 			calibYPoints = new Array();
 			calibMPoints = new Array();
+			calibStep = new Array();
 			
 			for(var i:int = 0; i < numThumbNails; i++)
 			{
@@ -207,6 +208,23 @@ package screens
 			// Initilize the thumbbnails
 			initThumbbnails();
 			
+			// Initilize 2d arrays
+			for(var k:int = 0; k < numThumbNails; k++) 
+			{ 
+				calibXPoints[k] = new Array();
+				calibYPoints[k] = new Array();
+				calibMPoints[k] = new Array();
+				calibStep[k] = new Array();
+				
+				for(var j:int = 0; j < 5; j++) 
+				{  
+					calibXPoints[k][j] = 0;
+					calibYPoints[k][j] = 0;
+					calibMPoints[k][j] = 0;
+					calibStep[k][j] = 0;
+				}
+			}
+			
 			// add the text field to the screen
 			addChild(textField);
 			addChild(bCalib);
@@ -239,22 +257,8 @@ package screens
 								// If inside the main image y-wise
 								if(t.globalY > -Y_SCALE)
 								{
-									if(c_FirstImage)
-										// Let's calibrate (find the middle image)
-										calibrate(t, index);	
-									else
-									{
-										trace("IN THE TOUCH");
-										// TEMP - I believe using the x,y scaling from the first image is good enough for the others
-										if(setCenter(t, index) == -1)
-										{
-											// Got an invalid point
-											index--;
-										}
-										
-										nextImage();
-									}
-									
+									// Let's calibrate (find the middle image)
+									calibrate(t, index);	
 								}
 							}	
 						}
@@ -271,7 +275,7 @@ package screens
 									// user clicked main image
 									if(t.target.name == "mainImage") {
 										
-										trace("CENTERPOINTS " + centerPoint[index] + " at index " + index);
+										// trace("CENTERPOINTS " + centerPoint[index] + " at index " + index);
 										
 										// If the user hasn't calibrated, then we're going to force them to
 										if(centerPoint[index] == 0 || !centerPoint[index])
@@ -657,21 +661,23 @@ package screens
 			//var vStep:Number = 1 / 8.84514436;
 			//vStep =  1 / 8.84514436;
 			//var hStep:Number = 9.04199478;
-			
+			trace("x y " + x + " " + y);
 			if(clicks == 0)
 			{
 				// Between the horizontal dots (lEFT)
 				// (679.1477832512315 - 510.58704453441294) / PIX
 				point1 = new Vector3D();
 				
-				point1.x = (centerX - x) * vStep;
-				point1.y = (centerY - y) * hStep;
+				point1.x = (centerX - x) * calibStep[index][0];
+				point1.y = (centerY - y) * calibStep[index][1];
 				point1.z = 0;
 				
-				// trace("1 point " + x + " pixels -> " + point1.x + "cms from center");
-				trace("Center " + centerX + " " + centerY);
-				trace(x + " " + y);
-				trace(point1);
+				trace((centerY - y));
+				trace(calibStep[index][1]);
+				trace("1 point " + x + " pixels -> " + point1.x + "cms from center");
+				// trace("Center " + centerX + " " + centerY);
+				//trace(x + " " + y);
+				//trace(point1);
 				
 				clicks++;
 			}
@@ -679,17 +685,19 @@ package screens
 			{
 				point2 = new Vector3D();
 				
-				point2.x = (centerX - x) * vStep;
-				point2.y = (centerY - y) * hStep;
+				point2.x = (centerX - x) * calibStep[index][0];
+				point2.y = (centerY - y) * calibStep[index][1];
 				point2.z = 0;
 				//trace("Y Points " + point1.y + " " + point2.y);
+				/*
 				trace("Center " + centerX + " " + centerY);
 				trace(x + " " + y);
 				trace(point2);
-				// trace("2 point " + x + " pixels -> "  + point2.x + " cms from center");
+				*/
+				 trace("2 point " + x + " pixels -> "  + point2.x + " cms from center");
 				
 				// Find magnatude
-				point1.x;
+				//point1.x;
 				var mx:Number = Math.pow(point1.x - camera1.x, 2);
 				var my:Number = Math.pow(point1.y - camera1.y, 2);
 				var mz:Number = Math.pow(point1.z - camera1.z, 2);
@@ -719,12 +727,14 @@ package screens
 				var lhs:Vector3D = camera1.subtract(camera2);
 				var rhs:Vector3D = r2.subtract(r1);
 				
+				
 				trace("p1 " + point1);
 				trace("p2 " + point2);
 				trace("r1 " + r1);
 				trace("r2 " + r2);
 				trace("lhs " + lhs);
 				trace("rhs " + rhs);
+				
 				
 				// equation 1 p1 + r1*t
 				// equation 2 p2 + r2*t
@@ -760,7 +770,7 @@ package screens
 				var fy:Number = lhs.y / rhs.y;
 				var fz:Number = lhs.z / rhs.z;
 				
-				trace("Result " + fx + " " + fy + " " + fz);
+				// trace("Result " + fx + " " + fy + " " + fz);
 				
 				var minVect:Vector3D = new Vector3D(100,100,100);
 				var minT:Number;
@@ -778,24 +788,25 @@ package screens
 					{
 						minVect = tempVect;
 						minT = t;
-						trace(Math.sqrt(tempVect.lengthSquared) + " " + Math.sqrt(minVect.lengthSquared) + " " + minT);
+						
 					}
 					
-					
+					trace(Math.sqrt(tempVect.lengthSquared) + " " + Math.sqrt(minVect.lengthSquared) + " " + minT);
 				}
+				
+				trace("MinT " + minT);
 				r1.x = r1.x * minT;
 				r1.y = r1.y * minT;
 				r1.z = r1.z * minT;
 				
 				point1 = point1.add(r1);
-				trace(point1);
+				trace(point1 + " " + minT);
 				
 				
 				clicks = 0;
 			}	
 		}		
-		
-			
+					
 		/**
 		 * Function for handling what happens after a user clicks on the image
 		 */
@@ -1010,7 +1021,7 @@ package screens
 					calibStage++;
 					break;
 				case 1:
-					if(calibrateY(target) == -1)
+					if(calibrateY(target, index) == -1)
 						return index;
 					
 					textField.text = "Please select the bottom middle dot";
@@ -1025,7 +1036,7 @@ package screens
 					
 					break;
 				case 2:
-					if(calibrateX(target) == -1)
+					if(calibrateX(target, index) == -1)
 						return index;
 					
 					textField.text = "Please select the center right dot";
@@ -1041,7 +1052,7 @@ package screens
 					
 					break;
 				case 3:
-					if(calibrateM(target) == -1)
+					if(calibrateM(target, index) == -1)
 						return index;
 					
 					textField.text = "Please select the top left dot";
@@ -1074,40 +1085,39 @@ package screens
 			if(calibStage == 4)
 			{
 				textField.text = "FIRST IMAGE CALIBRATION COMPLETE, PLEASE SELECT THE CENTER DOT";
-
-				calibrationCalculations();
+				
+				// calibrationCalculations();
 				
 				calibStage = 0;
 				
-				c_FirstImage = false;
 				nextImage();
 			}
 			
 			return 0;
 		}
 		
-		private function calibrationCalculations():void
+		private function calibrationCalculations(index:int):void
 		{
 			// TODO do we want the distance between the points instead of raw x/y distances 
 			// Left + right x distances / 2
 			
-			// TODO : DOEsnT HaVE TO BE 0~!
-			
-			vStep = (centerPoint[index].x - calibXPoints[0].x) / calibrator.x;
-			vStep -= (centerPoint[index].x - calibXPoints[1].x) / calibrator.x;
+			// Minus second one becasue 2nd number is negative b/c it's on the other side of the x axis... you know the negative side
+			var vStep:Number = (centerPoint[index].x - calibXPoints[index][0].x) / calibrator.x;
+			vStep -= (centerPoint[index].x - calibXPoints[index][1].x) / calibrator.x;
 			vStep = vStep / 2;
 			vStep = 1 / vStep;
-			
+			calibStep[index][0] = vStep;
 			
 			trace("vStep " + vStep);
 			
 			// Top + bottom y distances / 2
-			hStep = (centerPoint[index].y - calibYPoints[0].y) / calibrator.y;
-			hStep -= (centerPoint[index].y - calibYPoints[1].y) / calibrator.y;
-			hStep = -hStep / 2;
+			var hStep:Number = (centerPoint[index].y - calibYPoints[index][0].y) / calibrator.y;
+			hStep -= (centerPoint[index].y - calibYPoints[index][1].y) / calibrator.y;
+			hStep = hStep / 2;
 			hStep = 1 / hStep;
+			calibStep[index][1] = hStep;
 			
-			trace("hStep " + hStep);
+		//	trace("hStep " + hStep);
 			
 			// How much image distortion there is by comparing slopes
 			// Top right with bottom left
@@ -1115,20 +1125,20 @@ package screens
 			var m:Number;
 			var m1:Number;
 			
-			m = (centerPoint[index].x - calibMPoints[0].x) / (centerPoint[index].y - calibMPoints[0].y); 
-			m1 = (centerPoint[index].x - calibMPoints[2].x) / (centerPoint[index].y - calibMPoints[2].y);
+			m = (centerPoint[index].x - calibMPoints[index][0].x) / (centerPoint[index].y - calibMPoints[index][0].y); 
+			m1 = (centerPoint[index].x - calibMPoints[index][2].x) / (centerPoint[index].y - calibMPoints[index][2].y);
 			
 			//trace(m + " " + m1);
 			//trace("Differ in +m " + (m1 - m));
 			
-			m = (centerPoint[index].x - calibMPoints[3].x) / (centerPoint[index].y - calibMPoints[3].y);
-			m1 = (centerPoint[index].x - calibMPoints[1].x) / (centerPoint[index].y - calibMPoints[1].y);
+			m = (centerPoint[index].x - calibMPoints[index][3].x) / (centerPoint[index].y - calibMPoints[index][3].y);
+			m1 = (centerPoint[index].x - calibMPoints[index][1].x) / (centerPoint[index].y - calibMPoints[index][1].y);
 			
 			//trace(m + " " + m1);
 			//trace("Differ in -m " + (m1 - m));
 		}
 		
-		private function calibrateM(target:Touch):int
+		private function calibrateM(target:Touch, index:int):int
 		{
 			var point:Point = findCenter(target);
 			
@@ -1148,7 +1158,7 @@ package screens
 				return index;
 			}
 			
-			calibMPoints[calibIndex] = point;
+			calibMPoints[index][calibIndex] = point;
 			
 			// trace("M " + calibIndex + " " + point);
 			
@@ -1157,7 +1167,7 @@ package screens
 			return 0;
 		}
 		
-		private function calibrateY(target:Touch):int
+		private function calibrateY(target:Touch, index:int):int
 		{
 			var point:Point = findCenter(target);
 			
@@ -1173,16 +1183,16 @@ package screens
 				return index;
 			}
 			
-			calibYPoints[calibIndex] = point;
+			calibYPoints[index][calibIndex] = point;
 			
-			// trace("Y " + calibIndex + " " + point);
+			 trace("Y " + calibIndex + " " + point);
 			
 			calibIndex++;
 			
 			return 0;
 		}
 		
-		private function calibrateX(target:Touch):int
+		private function calibrateX(target:Touch, index:int):int
 		{
 			var point:Point = findCenter(target);
 			
@@ -1198,7 +1208,7 @@ package screens
 				return index;
 			}
 			
-			calibXPoints[calibIndex] = point;
+			calibXPoints[index][calibIndex] = point;
 			
 			trace("X " + calibIndex + " " + point);
 			
@@ -1214,6 +1224,11 @@ package screens
 				isCalibrating = false;
 				textField.text = "Calibration complete";
 				//return;
+				
+				// Do calculations for all the pictures
+				for(var k:int = 0; k < numThumbNails; k++)
+					calibrationCalculations(k);
+				
 				// For circular-ness
 				index = -1;
 			}
