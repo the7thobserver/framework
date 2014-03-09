@@ -329,9 +329,9 @@ package screens
 									}
 									
 									// set correct sizes of the image
-									//mainImage.maintainAspectRatio = false;
-									//mainImage.width = mainImageContainer.width;
-									//mainImage.height = mainImageContainer.height;
+									mainImage.maintainAspectRatio = false;
+									mainImage.width = mainImageContainer.width;
+									mainImage.height = mainImageContainer.height;
 									
 									// add the image to the container
 									mainImageContainer.addChild(mainImage);
@@ -497,9 +497,9 @@ package screens
 			mainImage = imageArray[0];
 			
 			// ensure that the sizes are correct
-			//mainImage.maintainAspectRatio = false;
-			//mainImage.width = mainImageContainer.width;
-			//mainImage.height = mainImageContainer.height;
+			mainImage.maintainAspectRatio = false;
+			mainImage.width = mainImageContainer.width;
+			mainImage.height = mainImageContainer.height;
 			
 			// add image to the main image container
 			mainImageContainer.addChild(mainImage);
@@ -1292,9 +1292,9 @@ package screens
 			mainImage = imageArray[index];
 			
 			// set correct sizes of the image
-			//mainImage.maintainAspectRatio = true;
-			//mainImage.width = mainImageContainer.width;
-			//mainImage.height = mainImageContainer.height;
+			mainImage.maintainAspectRatio = true;
+			mainImage.width = mainImageContainer.width;
+			mainImage.height = mainImageContainer.height;
 			
 			// add the image to the container
 			mainImageContainer.addChild(mainImage);
