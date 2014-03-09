@@ -4,9 +4,13 @@ package screens
 	import feathers.controls.Label;
 	import feathers.controls.Screen;
 	import feathers.controls.ScrollContainer;
+	import feathers.events.FeathersEventType;
 	import feathers.layout.VerticalLayout;
 	
-	import starling.textures.Texture; 			// using png images as textures for feathers controls image loader
+	import starling.events.Event;
+	import starling.textures.Texture;
+
+ 			// using png images as textures for feathers controls image loader
 	
 	public class HomeScreen extends Screen
 	{
@@ -33,11 +37,13 @@ package screens
 			//titleLoader.maintainAspectRatio = true; // this changes the images to maintain aspect ration
 			
 			titleLoader.source = Texture.fromEmbeddedAsset(TitleImage); // the name of the image data. Texture is a starling class
+			titleLoader.width = scrollContainer.width;
+			titleLoader.height = scrollContainer.height-50;
 			scrollContainer.addChild(titleLoader); // add to scroll container.
 			
 			
 			subText = new Label();
-			subText.text = "Getting those measurements faster.";
+			subText.text = "Getting those measurements faster";
 			scrollContainer.addChild(subText);
 		}
 		
@@ -51,7 +57,8 @@ package screens
 			scrollContainer = new ScrollContainer();
 			scrollContainer.layout = verticalLayout; 	
 			scrollContainer.width = this.stage.stageWidth;	
-			scrollContainer.height = this.stage.stageHeight;
+			scrollContainer.height = this.stage.stageHeight-24;
+			//scrollContainer.verticalScrollPolicy = ScrollContainer.SCROLL_POLICY_OFF;
 			addChild(scrollContainer); // add to the screen class
 		}
 		

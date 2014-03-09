@@ -3,7 +3,6 @@ package screens
 	// import image encoder
 	import com.adobe.images.PNGEncoder;
 	
-	// import flash packages
 	import flash.display.Bitmap;
 	import flash.display.Loader;
 	import flash.events.Event;
@@ -13,15 +12,15 @@ package screens
 	import flash.filesystem.FileStream;
 	import flash.net.URLRequest;
 	import flash.net.sendToURL;
+	import flash.text.TextFormat;
 	import flash.utils.ByteArray;
 	import flash.utils.Timer;
 	
-	// import feathers packages
 	import feathers.controls.Button;
 	import feathers.controls.LayoutGroup;
 	import feathers.controls.Screen;
+	import feathers.text.BitmapFontTextFormat;
 	
-	// import starling packages
 	import starling.display.Image;
 	import starling.events.Event;
 	
@@ -37,19 +36,19 @@ package screens
 		private const CAM_1_IMAGE_URL:String = "http://192.168.10.102/image/jpeg.cgi";
 		private const CAM_1_IR_ON:String = "http://192.168.10.102/dev/ir_ctrl.cgi?ir=1";
 		private const CAM_1_IR_OFF:String = "http://192.168.10.102/dev/ir_ctrl.cgi?ir=0";
-		private const CAM_1_SAVE_PATH:String = "C:/camera images/cam1.png";
+		private const CAM_1_SAVE_PATH:String = "C:/SAS Data/camera images/cam1.png";
 		
 		// URLS for Camera 2
 		private const CAM_2_IMAGE_URL:String = "http://192.168.10.103/image/jpeg.cgi";
 		private const CAM_2_IR_ON:String = "http://192.168.10.103/dev/ir_ctrl.cgi?ir=1";
 		private const CAM_2_IR_OFF:String = "http://192.168.10.103/dev/ir_ctrl.cgi?ir=0";
-		private const CAM_2_SAVE_PATH:String = "C:/camera images/cam2.png";
+		private const CAM_2_SAVE_PATH:String = "C:/SAS Data/camera images/cam2.png";
 		
 		// URLs for Camera 3
 		private const CAM_3_IMAGE_URL:String = "http://192.168.10.104/image/jpeg.cgi";
 		private const CAM_3_IR_ON:String = "http://192.168.10.104/dev/ir_ctrl.cgi?ir=1";
 		private const CAM_3_IR_OFF:String = "http://192.168.10.104/dev/ir_ctrl.cgi?ir=0";
-		private const CAM_3_SAVE_PATH:String = "C:/camera images/cam3.png";
+		private const CAM_3_SAVE_PATH:String = "C:/SAS Data/camera images/cam3.png";
 		
 		// Constants for snapshots button
 		private const SNAPSHOT_BUTTON_LABEL:String = "Take snapshots";
@@ -137,7 +136,7 @@ package screens
 			ir_lights = false;
 			
 			// initialize timer to go off every 500ms
-			timer = new Timer(1000);
+			timer = new Timer(1500);
 			
 			// initialize camera 1 variables
 			request_cam_1 = new URLRequest();
