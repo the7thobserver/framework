@@ -4,6 +4,8 @@ package screens
 	import flash.display.Sprite;
 	import flash.display3D.Context3D;
 	import flash.filesystem.File;
+	import flash.filesystem.FileMode;
+	import flash.filesystem.FileStream;
 	import flash.geom.Point;
 	import flash.geom.Rectangle;
 	import flash.geom.Vector3D;
@@ -54,14 +56,13 @@ package screens
 		private const ASPECT_RATIO:Number = 8/5;
 		
 		// Path to where the images are
-		private const IMAGE_PATH:String = "C:/camera images/"; 
+		private const IMAGE_PATH:String = "C:/SAS Data/camera images/"; 
+		
+		private const COORD_PATH:String = "C:/SAS Data/coordinates.txt";
 		
 		// Number of reflector points a person has on their body
 		private const NUM_BODY_POINTS:int = 4;
-		
-		// Width of a picture from the security camera
-		private const PIC_WIDTH = 1280;
-		
+	
 		  ///////////////////////////
 		 //// Regular Variables ////
 		///////////////////////////
@@ -146,6 +147,10 @@ package screens
 		private var threeDPosition:Array;
 		private var threeDIndex:int = 0;
 		
+		// generic file and filestream variables for reading/writing to file		
+		private var file:File;		
+		private var filestream:FileStream;
+		
 		  ///////////////////////
 		 //     Functions     //
 		///////////////////////
@@ -181,6 +186,8 @@ package screens
 			
 			// ??
 			complete = false;
+			
+			filestream = new FileStream();
 			
 			// create textField
 			textField = new TextField(220, 100, "Click on the left shoulder reflector");
@@ -739,11 +746,31 @@ package screens
 					trace("Resulting point = " + pointOfClosestApproach);
 					
 					threeDPosition[index][threeDIndex] = pointOfClosestApproach;
+					savePoint(pointOfClosestApproach);
 					threeDIndex++;
 				}
 			}	
 			trace("Finished");
 		}		
+		
+		private function savePoint(pointOfClosestApproach:Vector3D):void
+		{
+			var file:File = File.desktopDirectory.resolvePath(COORD_PATH);
+			filestream.open(file, FileMode.WRITE);
+			
+			for(var i:int = 0; i < numThumbNails; i++)
+			{
+				filestream.writeUTFBytes("Picture " + i + "\r\n");
+				for(var k:int = 0; k < bodyPoints[i].length - 1; k++)
+				{
+					trace(i + " " + k  + "  : " + bodyPoints[i][k].x + ", " + bodyPoints[i][k].y);
+					filestream.writeUTFBytes(bodyPoints[i][k].x + ", " + bodyPoints[i][k].y + "\r\n");		
+				}
+			}
+			
+			
+			filestream.close();				
+		}
 		
 		/**
 		 * Ray and point MUST corespond to the same equation!
