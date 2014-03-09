@@ -3,6 +3,7 @@ package screens
 	import flash.display.BitmapData;
 	import flash.display.Sprite;
 	import flash.display3D.Context3D;
+	import flash.events.Event;
 	import flash.filesystem.File;
 	import flash.filesystem.FileMode;
 	import flash.filesystem.FileStream;
@@ -188,6 +189,8 @@ package screens
 			complete = false;
 			
 			filestream = new FileStream();
+			file = File.desktopDirectory.resolvePath(COORD_PATH);
+			filestream.open(file, FileMode.WRITE);
 			
 			// create textField
 			textField = new TextField(220, 100, "Click on the left shoulder reflector");
@@ -206,6 +209,7 @@ package screens
 			// Add the mouse click event
 			this.addEventListener(TouchEvent.TOUCH, onTouch);
 			bCalib.addEventListener(starling.events.Event.TRIGGERED, startCalibrate);
+			this.addEventListener(flash.events.Event.EXITING, close);
 		}
 		
 		/**
@@ -256,6 +260,11 @@ package screens
 			addChild(bCalib);
 		}
 			
+		private function close():void
+		{
+			filestream.close();
+		}
+		
 		/**
 		 * Event handler to determine which actions to take when the screen is clicked on
 		 */
@@ -749,27 +758,13 @@ package screens
 					savePoint(pointOfClosestApproach);
 					threeDIndex++;
 				}
-			}	
+			}
 			trace("Finished");
 		}		
 		
 		private function savePoint(pointOfClosestApproach:Vector3D):void
 		{
-			var file:File = File.desktopDirectory.resolvePath(COORD_PATH);
-			filestream.open(file, FileMode.WRITE);
-			
-			for(var i:int = 0; i < numThumbNails; i++)
-			{
-				filestream.writeUTFBytes("Picture " + i + "\r\n");
-				for(var k:int = 0; k < bodyPoints[i].length - 1; k++)
-				{
-					trace(i + " " + k  + "  : " + bodyPoints[i][k].x + ", " + bodyPoints[i][k].y);
-					filestream.writeUTFBytes(bodyPoints[i][k].x + ", " + bodyPoints[i][k].y + "\r\n");		
-				}
-			}
-			
-			
-			filestream.close();				
+			filestream.writeUTFBytes(pointOfClosestApproach.x + ", " + pointOfClosestApproach.y + ", " + pointOfClosestApproach.z + "\r\n");				
 		}
 		
 		/**
