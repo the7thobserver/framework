@@ -44,7 +44,7 @@ package screens
 		private const BOUNDS:uint = 30;
 		
 		// scaling factors for mouse click positions
-		private const X_SCALE:Number = -215;
+		private const X_SCALE:Number = -220;
 		private const Y_SCALE:Number = -20;
 		
 		// thumbbnail design specs
@@ -59,6 +59,9 @@ package screens
 		// Number of reflector points a person has on their body
 		private const NUM_BODY_POINTS:int = 4;
 		
+		// Width of a picture from the security camera
+		private const PIC_WIDTH = 1280;
+		
 		  ///////////////////////////
 		 //// Regular Variables ////
 		///////////////////////////
@@ -66,6 +69,9 @@ package screens
 		// Arrays to hold pictures
 		private var imageArray:Array;
 		private var thumbnailArray:Array;
+		// Keep track of current image in array
+		// Note both arrays (thumbnail and image) use the same index as they move in unison
+		private var index:int = 0;
 		
 		// Keep track of side scroll
 		private var touchBeginX:int;
@@ -73,10 +79,6 @@ package screens
 		
 		// Main image holder
 		private var mainImage:ImageLoader; 
-		
-		// Keep track of current image in array
-		// Note both arrays (thumbnail and image) use the same index
-		private var index:int = 0;
 		
 		// Containers which I assume are like divs in http
 		private var mainImageContainer:LayoutGroup;
@@ -100,8 +102,6 @@ package screens
 		// variable for keeping track of which reflector state we are in
 		private var state:Number;
 		
-		//private var x1:Number, x2:Number;
-		
 		private var numThumbNails:int = 0;
 		
 		// Holds the distances between the dots in the coresponding direction in meters : W is the distance to the edge of the board
@@ -116,24 +116,26 @@ package screens
 		//private var camera2:Vector3D = new Vector3D(-0.29, -0.25, -1.53);
 		
 		// Ya these could have been done better...
-		private var centerPoint:Array;
-		private var calibXPoints:Array;
-		private var calibYPoints:Array;
-		private var calibMPoints:Array;
-		private var calibIndex:int = 0;
+		private var centerPoint:Array;		// 1D
+		private var calibXPoints:Array;		// 2D	[Picture index][X] ; 0 = left, 1 = right
+		private var calibYPoints:Array;		// 2D	[Picture index][X] ; 0 = top, 1 = bottom
+		private var calibMPoints:Array;		// 2D	[Picture index][X] ; 0 = top left, 1 = bottom left, 2 = bottom right, 3 = top right ; Makes a U
+		private var calibIndex:int = 0;		// Indexes all the above calib point arrays
 		
+		// Calibration button
 		private var bCalib:Button;
+		
 		// Boolean to see if the user is in the calibrating state
 		private var isCalibrating:Boolean = false;
 		// Keep track of which stage of calibration we're in
 		private var calibStage:int = 0;
 		
 		// calibstep[picture#][X] - resolution distances m to pix conversions
-		// X = 
-		// 0 = left
-		// 1 = right
-		// 3 = top
-		// 4 = bottom
+		// X = {
+		// 0 = left,
+		// 1 = right,
+		// 3 = top,
+		// 4 = bottom }
 		private var calibStep:Array;
 		
 		// Holds the user selected reflector points
@@ -177,13 +179,13 @@ package screens
 			// set initial state
 			state = 0;
 			
-			// 
+			// ??
 			complete = false;
 			
 			// create textField
 			textField = new TextField(220, 100, "Click on the left shoulder reflector");
 			textField.x = 0;
-			textField.y = 500;
+			textField.y = 450;
 			textField.color = 0xffffff;
 			
 			// Init button
@@ -192,7 +194,7 @@ package screens
 			bCalib.width = 100;
 			bCalib.height = 50;
 			bCalib.x = 10;
-			bCalib.y = 600;
+			bCalib.y = 575;
 			
 			// Add the mouse click event
 			this.addEventListener(TouchEvent.TOUCH, onTouch);
@@ -327,9 +329,9 @@ package screens
 									}
 									
 									// set correct sizes of the image
-									mainImage.maintainAspectRatio = false;
-									mainImage.width = mainImageContainer.width;
-									mainImage.height = mainImageContainer.height;
+									//mainImage.maintainAspectRatio = false;
+									//mainImage.width = mainImageContainer.width;
+									//mainImage.height = mainImageContainer.height;
 									
 									// add the image to the container
 									mainImageContainer.addChild(mainImage);
@@ -427,8 +429,8 @@ package screens
 		 */
 		private function buildContainers():void {	
 			// create the layout
-			layout.horizontalAlign = VerticalLayout.HORIZONTAL_ALIGN_CENTER
-			layout.verticalAlign = HorizontalLayout.VERTICAL_ALIGN_MIDDLE;
+			layout.horizontalAlign = VerticalLayout.HORIZONTAL_ALIGN_LEFT
+			layout.verticalAlign = HorizontalLayout.VERTICAL_ALIGN_TOP;
 			layout.gap = 10;
 			
 			// create scroll container
@@ -446,7 +448,7 @@ package screens
 			mainImageContainer.y = 0;
 			
 			// scale container to fit the screen
-			mainImageContainer.width = stage.stageWidth - 220;
+			mainImageContainer.width = stage.stageWidth + X_SCALE;
 			mainImageContainer.height = (1/ASPECT_RATIO) * mainImageContainer.width;
 			
 			// add components to page
@@ -495,9 +497,9 @@ package screens
 			mainImage = imageArray[0];
 			
 			// ensure that the sizes are correct
-			mainImage.maintainAspectRatio = false;
-			mainImage.width = mainImageContainer.width;
-			mainImage.height = mainImageContainer.height;
+			//mainImage.maintainAspectRatio = false;
+			//mainImage.width = mainImageContainer.width;
+			//mainImage.height = mainImageContainer.height;
 			
 			// add image to the main image container
 			mainImageContainer.addChild(mainImage);
@@ -1290,9 +1292,9 @@ package screens
 			mainImage = imageArray[index];
 			
 			// set correct sizes of the image
-			mainImage.maintainAspectRatio = false;
-			mainImage.width = mainImageContainer.width;
-			mainImage.height = mainImageContainer.height;
+			//mainImage.maintainAspectRatio = true;
+			//mainImage.width = mainImageContainer.width;
+			//mainImage.height = mainImageContainer.height;
 			
 			// add the image to the container
 			mainImageContainer.addChild(mainImage);

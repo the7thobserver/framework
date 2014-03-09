@@ -36,10 +36,9 @@ package
 			
 			// initialize the viewport
 			viewPort = new Rectangle();
-			
+		
 			// add event listeners to stage
 			stage.addEventListener(Event.RESIZE, onStageResize);
-			
 		}
 		
 		protected function onStageResize(event:Event):void

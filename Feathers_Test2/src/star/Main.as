@@ -52,6 +52,7 @@ package star
 			setupScreens(); 
 			completeLayout(); // wrap everything up.
 			
+			stage.addEventListener(Event.RESIZE, resize);
 		}
 		
 		private function completeLayout():void
@@ -113,6 +114,11 @@ package star
 			
 			// Full control over which screen is being displayed. 
 			screenTransitionManager = new ScreenFadeTransitionManager(screenNavigator);
+		}
+		
+		private function resize(event:Event):void
+		{
+			navigationBar.width = stage.stageWidth;
 		}
 	}
 }
