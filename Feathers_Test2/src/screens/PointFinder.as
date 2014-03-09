@@ -38,7 +38,7 @@ package screens
 		private const BLUE:uint = 0x0000ff;
 		
 		// brightness threshold
-		private const BRIGHTNESS_THRESHOLD:uint = 3200000;
+		private const BRIGHTNESS_THRESHOLD:uint = 3000000;
 		
 		// box bound around mouse click area
 		private const BOUNDS:uint = 30;
@@ -48,7 +48,7 @@ package screens
 		private const Y_SCALE:Number = -20;
 		
 		// thumbbnail design specs
-		private const thumbNailSize:int = 200;
+		private const THUMBNAIL_SIZE:int = 200;
 		
 		// width-to-height ratio of images
 		private const ASPECT_RATIO:Number = 8/5;
@@ -58,6 +58,7 @@ package screens
 		
 		// Number of reflector points a person has on their body
 		private const NUM_BODY_POINTS:int = 4;
+		
 		  ///////////////////////////
 		 //// Regular Variables ////
 		///////////////////////////
@@ -99,21 +100,22 @@ package screens
 		// variable for keeping track of which reflector state we are in
 		private var state:Number;
 		
-		private var x1:Number, x2:Number;
-		private var clicks:Number = 0;
+		//private var x1:Number, x2:Number;
 		
 		private var numThumbNails:int = 0;
 		
 		// Holds the distances between the dots in the coresponding direction in meters : W is the distance to the edge of the board
 		// Unsure about the 30.5
 		private var calibrator:Vector3D = new Vector3D(0.25,0.2, 0 , 30.5);
-		private var camera1:Vector3D = new Vector3D(0.08, -0.25, -1.7);
-		private var camera2:Vector3D = new Vector3D(-0.29, -0.25, -1.53);
-		private var point1:Vector3D;
-		private var point2:Vector3D;
-		private var r1:Vector3D;
-		private var r2:Vector3D;
 		
+		private var camera1:Vector3D = new Vector3D(1, 0, -1.5);
+		private var camera2:Vector3D = new Vector3D(-1, 0, -1.5);
+		
+		// Old points
+		//private var camera1:Vector3D = new Vector3D(0.08, -0.25, -1.7);
+		//private var camera2:Vector3D = new Vector3D(-0.29, -0.25, -1.53);
+		
+		// Ya these could have been done better...
 		private var centerPoint:Array;
 		private var calibXPoints:Array;
 		private var calibYPoints:Array;
@@ -121,9 +123,12 @@ package screens
 		private var calibIndex:int = 0;
 		
 		private var bCalib:Button;
+		// Boolean to see if the user is in the calibrating state
 		private var isCalibrating:Boolean = false;
+		// Keep track of which stage of calibration we're in
 		private var calibStage:int = 0;
-		// calibstep[picture#][X]
+		
+		// calibstep[picture#][X] - resolution distances m to pix conversions
 		// X = 
 		// 0 = left
 		// 1 = right
@@ -131,8 +136,13 @@ package screens
 		// 4 = bottom
 		private var calibStep:Array;
 		
+		// Holds the user selected reflector points
 		private var bodyPoints:Array;
 		private var bodyIndex:int = 0;
+		
+		// Holds the 3D of the reflectors with respect to the calbirtor center dot
+		private var threeDPosition:Array;
+		private var threeDIndex:int = 0;
 		
 		  ///////////////////////
 		 //     Functions     //
@@ -154,27 +164,21 @@ package screens
 			right_hip = new Point();
 			
 			// Initilize arrays
+			imageArray = new Array();
+			thumbnailArray = new Array();
 			centerPoint = new Array();
 			calibXPoints = new Array();
 			calibYPoints = new Array();
 			calibMPoints = new Array();
 			calibStep = new Array();
 			bodyPoints = new Array();
+			threeDPosition = new Array();
 			
-			for(var i:int = 0; i < numThumbNails; i++)
-			{
-				centerPoint[i] = 0;
-			}
-		
 			// set initial state
 			state = 0;
 			
 			// 
 			complete = false;
-			
-			// Initilize arrays
-			imageArray = new Array();
-			thumbnailArray = new Array();
 			
 			// create textField
 			textField = new TextField(220, 100, "Click on the left shoulder reflector");
@@ -212,6 +216,11 @@ package screens
 			// Initilize the thumbbnails
 			initThumbbnails();
 			
+			for(var i:int = 0; i < numThumbNails; i++)
+			{
+				centerPoint[i] = 0;
+			}
+			
 			// Initilize 2d arrays
 			for(var k:int = 0; k < numThumbNails; k++) 
 			{ 
@@ -220,6 +229,7 @@ package screens
 				calibMPoints[k] = new Array();
 				calibStep[k] = new Array();
 				bodyPoints[k] = new Array();
+				threeDPosition[k] = new Array();
 				
 				for(var j:int = 0; j < 5; j++) 
 				{  
@@ -228,6 +238,7 @@ package screens
 					calibMPoints[k][j] = 0;
 					calibStep[k][j] = 0;
 					bodyPoints[k][j] = 0;
+					threeDPosition[k][j] = 0;
 				}
 			}
 			
@@ -400,7 +411,7 @@ package screens
 				
 				// set the coordinates and size
 				temp.x = 0;
-				temp.width = thumbNailSize;
+				temp.width = THUMBNAIL_SIZE;
 				
 				// set the name and add it back into the array
 				temp.name = "thumbnail" + i;
@@ -634,196 +645,181 @@ package screens
 			// update text field
 			//textField.text = "Radius = " + radius;
 			
-			updateStateAfterClick(x, y, bmd);
+			// Invalid reflector selection
+			if(updateStateAfterClick(x, y, bmd) == -1)
+			{
+				trace("invliad reflector");
+				return;
+			}
 			
 			// trace("updating image");
 			
 			// Store all the values of the points
-			if(bodyIndex == NUM_BODY_POINTS)
-			{
-				bodyIndex = 0;
-				nextImage();
-			}
-			trace("BODY INDEX " + bodyIndex);
-			
 			var p:Point = new Point(x, y);
 			bodyPoints[index][bodyIndex] = p;
-			trace("POINT " + bodyPoints[index][bodyIndex].x + " " + bodyPoints[index][bodyIndex].y);
+			trace("POINT " + bodyIndex + " " + bodyPoints[index][bodyIndex].x + " " + bodyPoints[index][bodyIndex].y);
 			bodyIndex++;
-			
-			// If the click is the last picture and the last point then go calculate all the rays
-			if(bodyIndex == NUM_BODY_POINTS && index == numThumbNails)
-			{
-				trace("GOING INTO RAY Calc");
-				rayCalc();
-			}
+
 			// Update image
 			imageArray[index].source = Texture.fromBitmapData(bmd);
 			
 			// Update main image
 			mainImage = imageArray[index];
 			
-			// Update thumbbnail
+			// If the click is the last picture and the last point then go calculate all the rays
+			// -1 b/c index is 0 to numthumnails - 1
+			if(bodyIndex == NUM_BODY_POINTS && index == (numThumbNails - 1))
+			{
+				trace("GOING INTO RAY CALC");
+				rayCalc();
+			}
+			
+			if(bodyIndex == NUM_BODY_POINTS)
+			{
+				// Reset counter and go the next picture
+				bodyIndex = 0;
+				nextImage();
+			}		
+			
+			// Update thumbbnail - not sure why this is commented out
 			//thumbnailArray[index].source = Texture.fromBitmapData(bmd);
 		}
-		
+		// Closest approach algorithm - http://paulbourke.net/geometry/pointlineplane/
 		private function rayCalc():void
+		{
+			threeDIndex = 0;
+			//var centerX:Number = centerPoint[index].x;
+			//var centerY:Number = centerPoint[index].y;
+			
+			// For each picture pair
+			for(var i:int = 0; i < numThumbNails; i += 2)
+			{
+				 // Compare all points
+				for(var j:int = 0; j < NUM_BODY_POINTS; j++)
+				{
+					// Eqution r1 = r1 + v1t
+					
+					// Create second points
+					// p in the equation
+					var point1:Vector3D = createPoint(index, j);
+					var point2:Vector3D = createPoint(index, j);
+					
+					trace("1 point " + x + " pixels -> " + point1.x + "cms from center : Coordinte " + point1);
+					trace("2 point " + x + " pixels -> "  + point2.x + " cms from center : Coordinate " + point2);
+					
+					// Create first rays
+					// r in the equation
+					var magnitude:Number = calcMagnatude(point1, camera1);
+					var r1:Vector3D = new Vector3D();
+					r1 = createRay(point1, camera1, magnitude);
+					
+					// Create 2nd ray
+					magnitude = calcMagnatude(point2, camera2);
+					var r2:Vector3D = new Vector3D();
+					r2 = createRay(point2, camera2, magnitude);
+			
+					// Do maths
+					// r1 + v1t = r2 + v2t == r1 - r2 = v2t - v1t == r1 - r2 = (v2 - v1)t 
+					// lhs = r1 - r2
+					// rhs = v2 - v1
+					var lhs:Vector3D = camera1.subtract(camera2);
+					var rhs:Vector3D = r2.subtract(r1);
+					
+					trace("p1 " + point1);
+					trace("p2 " + point2);
+					trace("r1 " + r1);
+					trace("r2 " + r2);
+					trace("lhs " + lhs);
+					trace("rhs " + rhs);
+							
+					var pointOfClosestApproach:Vector3D = findClosestApproach(rhs, lhs, r1, point1);
+					
+					trace("Resulting point = " + pointOfClosestApproach);
+					
+					threeDPosition[index][threeDIndex] = pointOfClosestApproach;
+					threeDIndex++;
+				}
+			}	
+			trace("Finished");
+		}		
+		
+		/**
+		 * Ray and point MUST corespond to the same equation!
+		 */
+		private function findClosestApproach(rhs:Vector3D, lhs:Vector3D, ray:Vector3D, point:Vector3D):Vector3D
+		{
+			// Sentiel values to be used on the first compare, values don't matter as long as they're large values
+			// In this case 100m for all directions
+			var minVect:Vector3D = new Vector3D(100,100,100);
+			// Will hold the minimum t value found through the point of closest approach
+			var minT:Number;
+			
+			// Loop until 20m with steps of 1cm
+			for(var t:Number = 0; t < 20; t = t + 0.01)
+			{
+				var tempVect:Vector3D = rhs.clone();
+				
+				// Plug in values of t on the 
+				tempVect.x = lhs.x + tempVect.x * t;
+				tempVect.y = lhs.y + tempVect.y * t;
+				tempVect.z = lhs.z + tempVect.z * t;
+				
+				if(tempVect.lengthSquared < minVect.lengthSquared)
+				{
+					minVect = tempVect;
+					minT = t;
+				}
+				// trace(Math.sqrt(tempVect.lengthSquared) + " " + Math.sqrt(minVect.lengthSquared) + " " + minT);
+			}	
+				
+			// After t is calculated plug back into d = p - rt  
+			
+			var resultPoint:Vector3D = new Vector3D();
+			
+			resultPoint.x = point.x - ray.x * minT;
+			resultPoint.y = point.y - ray.y * minT;
+			resultPoint.z = point.z - ray.z * minT;
+			
+			return point;
+		}
+		
+		private function createRay(point:Vector3D, camera:Vector3D, magnitude:Number):Vector3D
+		{
+			var ray:Vector3D = new Vector3D();
+			
+			ray.x = (point.x - camera.x) * (1 / magnitude);
+			ray.y = (point.y - camera.y) * (1 / magnitude);
+			ray.z = (point.z - camera.z) * (1 / magnitude);
+			
+			return ray;
+		}
+		
+		private function createPoint(index:int, j:int):Vector3D
 		{
 			var centerX:Number = centerPoint[index].x;
 			var centerY:Number = centerPoint[index].y;
+						
+			// Create first pont 
+			var point:Vector3D = new Vector3D();
 			
-			// trace("Current Center is " + centerX + ", " + centerY);
+			point.x = (centerX - bodyPoints[index][j].x) * findM(centerX - bodyPoints[index][j].x, index, "x");
+			point.y = (centerY - bodyPoints[index][j].y) * findM(centerY - bodyPoints[index][j].y, index, "y");
+			point.z = 0;
 			
-			// Pixels/cm
-			// 21.043 / 21.58
-			//var vStep:Number = 21.043;
-			//var hStep:Number = 21.58;
+			return point;
+		}
+		
+		private function calcMagnatude(point:Vector3D, camera:Vector3D):Number
+		{
+			var mx:Number = Math.pow(point.x - camera.x, 2);
+			var my:Number = Math.pow(point.y - camera.y, 2);
+			var mz:Number = Math.pow(point.z - camera.z, 2);
 			
-			// recalc pix/cm
-			//var vStep:Number = 1 / 8.84514436;
-			//vStep =  1 / 8.84514436;
-			//var hStep:Number = 9.04199478;
-
-			// Closest approach algorithm - http://paulbourke.net/geometry/pointlineplane/
-			trace("x y " + x + " " + y);
-			if(clicks == 0)
-			{
-				point1 = new Vector3D();
-				
-				point1.x = (centerX - x) * findM(centerX - x, index, "x");
-				point1.y = (centerY - y) * findM(centerY - y, index, "y");
-				point1.z = 0;
-				
-				trace((centerY - y));
-				trace(calibStep[index][1]);
-				trace("1 point " + x + " pixels -> " + point1.x + "cms from center");
-				// trace("Center " + centerX + " " + centerY);
-				//trace(x + " " + y);
-				//trace(point1);
-				
-				clicks++;
-			}
-			else
-			{
-				point2 = new Vector3D();
-				
-				point2.x = (centerX - x) * findM(centerX - x, index, "x");
-				point2.y = (centerY - y) * findM(centerY - y, index, "y");
-				point2.z = 0;
-				//trace("Y Points " + point1.y + " " + point2.y);
-				/*
-				trace("Center " + centerX + " " + centerY);
-				trace(x + " " + y);
-				trace(point2);
-				*/
-				 trace("2 point " + x + " pixels -> "  + point2.x + " cms from center");
-				
-				// Find magnatude
-				//point1.x;
-				var mx:Number = Math.pow(point1.x - camera1.x, 2);
-				var my:Number = Math.pow(point1.y - camera1.y, 2);
-				var mz:Number = Math.pow(point1.z - camera1.z, 2);
-				
-				var magnitude:Number = Math.sqrt(mx + my + mz);
-				trace("Mag " + magnitude + " " + mx + " " + my + " " +mz);
-				
-				// Create rays
-				r1 = new Vector3D();
-				r1.x = (point1.x - camera1.x) * (1 / magnitude);
-				r1.y = (point1.y - camera1.y) * (1 / magnitude);
-				r1.z = (point1.z - camera1.z) * (1 / magnitude);
-				
-				// Find magnitude
-				mx = Math.pow(point2.x - camera2.x, 2);
-				my = Math.pow(point2.y - camera2.y, 2);
-				mz = Math.pow(point2.z - camera2.z, 2);
-				
-				magnitude = Math.sqrt(mx + my + mz);
-				
-				r2 = new Vector3D();
-				r2.x = (point2.x - camera2.x) * (1 / magnitude);
-				r2.y = (point2.y - camera2.y) * (1 / magnitude);
-				r2.z = (point2.z - camera2.z) * (1 / magnitude);
-				
-				// Do maths
-				var lhs:Vector3D = camera1.subtract(camera2);
-				var rhs:Vector3D = r2.subtract(r1);
-				
-				
-				trace("p1 " + point1);
-				trace("p2 " + point2);
-				trace("r1 " + r1);
-				trace("r2 " + r2);
-				trace("lhs " + lhs);
-				trace("rhs " + rhs);
-				
-				
-				// equation 1 p1 + r1*t
-				// equation 2 p2 + r2*t
-				// d=((p1+r1*t) - (p2+r2*t))^2
-				// find lowest point
-				/*
-				var t:Number;
-				for(t = 1; t < 100; t++)
-				{
-					// create equation 1
-					var tempPT1:Vector3D = point1.clone();
-					var tempR1:Vector3D = new Vector3D();
-					
-					tempR1.x = r1.x * t;
-					tempR1.y = r1.y * t;
-					tempR1.z = r1.z * t;
-					
-					// create equation 2
-					var tempPT2:Vector3D = point2.clone();
-					var tempR2:Vector3D = new Vector3D();
-					
-					tempR2.x = r2.x * t;
-					tempR2.y = r2.y * t;
-					tempR2.z = r2.z * t;
-					
-					var result:Vector3D = tempPT1.add(tempR1).subtract(tempPT2.add(tempR2));
-					
-				}
-				// var lok:Vector3D = point1.add(r1 * t).subtract(point2.add(r2 * t));
-					*/
-//				
-//				var fx:Number = lhs.x / rhs.x;
-//				var fy:Number = lhs.y / rhs.y;
-//				var fz:Number = lhs.z / rhs.z;
-//				
-				// trace("Result " + fx + " " + fy + " " + fz);
-				
-				var minVect:Vector3D = new Vector3D(100,100,100);
-				var minT:Number;
-				for(var t:Number = 0; t < 20; t = t + 0.01)
-				{
-					var tempVect:Vector3D = rhs.clone();
-					
-					tempVect.x = lhs.x + tempVect.x * t;
-					tempVect.y = lhs.y + tempVect.y * t;
-					tempVect.z = lhs.z + tempVect.z * t;
-					
-					if(tempVect.lengthSquared < minVect.lengthSquared)
-					{
-						minVect = tempVect;
-						minT = t;
-					}
-					
-					// trace(Math.sqrt(tempVect.lengthSquared) + " " + Math.sqrt(minVect.lengthSquared) + " " + minT);
-				}
-				
-				trace("MinT " + minT);
-				r1.x = r1.x * minT;
-				r1.y = r1.y * minT;
-				r1.z = r1.z * minT;
-				
-				point1 = point1.add(r1);
-				trace(point1 + " " + minT);
-				
-				clicks = 0;
-			}	
-		}		
+			var magnitude:Number = Math.sqrt(mx + my + mz);
+			trace("Mag " + magnitude + " " + mx + " " + my + " " +mz);
+			
+			return magnitude;
+		}
 		
 		private function findM(point:Number, index:int, direction:String):Number
 		{
@@ -858,7 +854,7 @@ package screens
 		/**
 		 * Function for handling what happens after a user clicks on the image
 		 */
-		private function updateStateAfterClick(x:Number, y:Number, bmd:BitmapData):void {
+		private function updateStateAfterClick(x:Number, y:Number, bmd:BitmapData):int {
 			
 			// Check if the coordinates are valid
 			if (x > 0 && y > 0) {
@@ -919,10 +915,10 @@ package screens
 				// update the instructions based on the new state
 				updateInstructions();
 			}
-			
 			// location not valid
 			else {
 				textField.text = "There is no reflector at that location.  Please try again.";
+				return -1;
 			}
 			
 			// internal function for drawing line between two points
@@ -946,6 +942,8 @@ package screens
 					complete = false;
 				}
 			}
+			
+			return 0;
 		}
 				
 		/**
@@ -1286,6 +1284,8 @@ package screens
 			}
 			
 			index++;
+			
+			trace("Looking at index " + index);
 			
 			mainImage = imageArray[index];
 			
