@@ -296,8 +296,8 @@ package screens
 			filestream.writeUTFBytes("camera1:" + cam_1_coords.text + "\r\n");
 			filestream.writeUTFBytes("camera2:" + cam_2_coords.text + "\r\n");
 			filestream.writeUTFBytes("camera3:" + cam_3_coords.text + "\r\n");
-			filestream.writeUTFBytes("horizontal:" + vertical_axis.text + "\r\n");
-			filestream.writeUTFBytes("vertical:" + horizontal_axis.text + "\r\n");
+			filestream.writeUTFBytes("horizontal:" + horizontal_axis.text + "\r\n");
+			filestream.writeUTFBytes("vertical:" + vertical_axis.text + "\r\n");
 			
 			// close the file
 			filestream.close();
